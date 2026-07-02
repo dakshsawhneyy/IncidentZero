@@ -7,6 +7,7 @@ export default function IncidentBrief() {
   const navigate = useNavigate();
   const [revealed, setRevealed] = useState(false);
   const [now, setNow] = useState(new Date());
+  const [lockedTool, setLockedTool] = useState(null);
 
   useEffect(() => {
     const t = setTimeout(() => setRevealed(true), 300);
@@ -16,6 +17,12 @@ export default function IncidentBrief() {
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    function onKey(e) { if (e.key === 'Escape') setLockedTool(null); }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, []);
 
   const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -108,12 +115,20 @@ export default function IncidentBrief() {
               { icon: '📝', label: 'Notes', desc: 'Your investigation notebook' },
               { icon: '🏁', label: 'Submit RCA', desc: 'Submit when you know the root cause' },
             ].map(tool => (
-              <div key={tool.label} className={styles.toolCard}>
+              <div
+                key={tool.label}
+                className={styles.toolCard}
+                onClick={() => setLockedTool(tool)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={e => e.key === 'Enter' && setLockedTool(tool)}
+              >
                 <span className={styles.toolIcon}>{tool.icon}</span>
                 <div>
                   <div className={styles.toolLabel}>{tool.label}</div>
                   <div className={styles.toolDesc}>{tool.desc}</div>
                 </div>
+                <span className={styles.toolLock}>🔒</span>
               </div>
             ))}
           </div>
@@ -134,6 +149,38 @@ export default function IncidentBrief() {
           </p>
         </div>
       </div>
+
+      {/* ── Locked Tool Modal ── */}
+      {lockedTool && (
+        <div className={styles.lockBackdrop} onClick={() => setLockedTool(null)}>
+          <div className={styles.lockModal} onClick={e => e.stopPropagation()}>
+            <div className={styles.lockModalHeader}>
+              <span className={styles.lockModalIcon}>{lockedTool.icon}</span>
+              <span className={styles.lockModalName}>{lockedTool.label}</span>
+            </div>
+            <div className={styles.lockModalBody}>
+              <div className={styles.lockIcon}>🔒</div>
+              <h3 className={styles.lockTitle}>Locked until investigation starts</h3>
+              <p className={styles.lockDesc}>
+                <strong>{lockedTool.label}</strong> — {lockedTool.desc}.
+              </p>
+              <p className={styles.lockHint}>
+                Start the investigation to unlock all tools and begin your timer.
+                Everything you need to solve this incident is in there.
+              </p>
+            </div>
+            <div className={styles.lockModalFooter}>
+              <button className={styles.lockDismiss} onClick={() => setLockedTool(null)}>
+                Not yet
+              </button>
+              <button className={styles.lockStart} onClick={handleStart}>
+                <span className={styles.lockStartDot} />
+                Start Investigation
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

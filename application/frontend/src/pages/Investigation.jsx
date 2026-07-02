@@ -304,6 +304,7 @@ export default function Investigation() {
   const [elapsed, setElapsed] = useState(0);
   const [tabVisits, setTabVisits] = useState({});
   const [showIncidentModal, setShowIncidentModal] = useState(false);
+  const [showAbandonModal, setShowAbandonModal] = useState(false);
 
   // Notes — persisted so tab switches don't lose content
   const [notes, setNotesState] = useState(
@@ -348,7 +349,10 @@ export default function Investigation() {
 
   useEffect(() => {
     function onKeyDown(e) {
-      if (e.key === 'Escape') setShowIncidentModal(false);
+      if (e.key === 'Escape') {
+        setShowIncidentModal(false);
+        setShowAbandonModal(false);
+      }
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
@@ -377,12 +381,27 @@ export default function Investigation() {
     navigate('/report');
   }
 
+  function handleAbandon() {
+    sessionStorage.removeItem('iz_rca_what');
+    sessionStorage.removeItem('iz_rca_root');
+    sessionStorage.removeItem('iz_rca_fix');
+    sessionStorage.removeItem('iz_notes');
+    sessionStorage.removeItem('incidentStart');
+    navigate('/');
+  }
+
   return (
     <div className={styles.workspace}>
       {/* Top bar */}
       <div className={styles.topbar}>
-        <div className={styles.topbarLeft} onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
-          <span className={styles.logoName}>IncidentZero</span>
+        <div className={styles.topbarLeft}>
+          <button
+            className={styles.abandonBtn}
+            onClick={() => setShowAbandonModal(true)}
+            title="Abandon investigation"
+          >
+            ← Home
+          </button>
         </div>
 
         <div className={styles.incidentTag}>
@@ -558,6 +577,31 @@ export default function Investigation() {
               </span>
               <button className={styles.modalCloseBtn} onClick={() => setShowIncidentModal(false)}>
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Abandon Investigation Modal ── */}
+      {showAbandonModal && (
+        <div className={styles.modalBackdrop} onClick={() => setShowAbandonModal(false)}>
+          <div className={styles.abandonModal} onClick={e => e.stopPropagation()}>
+            <div className={styles.abandonModalIcon}>⚠️</div>
+            <h2 className={styles.abandonModalTitle}>Abandon Investigation?</h2>
+            <p className={styles.abandonModalDesc}>
+              You've been investigating for <strong>{formatTime(elapsed)}</strong>.
+              Leaving now will discard your progress, notes, and any unsaved RCA draft.
+            </p>
+            <p className={styles.abandonModalSub}>
+              The incident will still be here when you come back.
+            </p>
+            <div className={styles.abandonModalActions}>
+              <button className={styles.abandonModalStay} onClick={() => setShowAbandonModal(false)}>
+                Keep Investigating
+              </button>
+              <button className={styles.abandonModalLeave} onClick={handleAbandon}>
+                Abandon &amp; Go Home
               </button>
             </div>
           </div>
