@@ -23,3 +23,20 @@ Start Investigation
 
 ------------------------------------
 ```
+
+# Incident Ideas
+```
+Latency increased.
+
+CPU looks normal.
+
+Memory looks normal.
+
+Pods are healthy.
+
+Error rate slowly increasing.
+
+One downstream dependency suddenly has 800ms response time.
+
+Now investigate.
+```
