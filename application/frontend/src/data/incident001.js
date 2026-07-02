@@ -184,6 +184,19 @@ postgres-0                    1/1     Running   0          12d`,
 2026-07-02T07:13:01Z ERROR Redis dial tcp 10.0.1.45:6379: i/o timeout
 2026-07-02T07:13:03Z WARN  Circuit breaker OPEN for redis-cache
 2026-07-02T07:13:07Z ERROR All retries exhausted. Request failed.`,
+  
+  'kubectl logs checkout-api-7d9f8c-p9mnv': `2026-07-02T07:12:44Z INFO  POST /api/checkout 200 79ms
+2026-07-02T07:12:58Z WARN  Redis connection slow — latency 340ms
+2026-07-02T07:13:01Z ERROR Redis dial tcp 10.0.1.45:6379: i/o timeout
+2026-07-02T07:13:03Z WARN  Circuit breaker OPEN for redis-cache
+2026-07-02T07:13:07Z ERROR All retries exhausted. Request failed.`,
+  
+  'kubectl logs checkout-api-7d9f8c-8rvjq': `2026-07-02T07:12:44Z INFO  POST /api/checkout 200 79ms
+2026-07-02T07:12:58Z WARN  Redis connection slow — latency 340ms
+2026-07-02T07:13:01Z ERROR Redis dial tcp 10.0.1.45:6379: i/o timeout
+2026-07-02T07:13:03Z WARN  Circuit breaker OPEN for redis-cache
+2026-07-02T07:13:07Z ERROR All retries exhausted. Request failed.`,
+
 
   'kubectl logs redis-cache-0': `2026-07-02T07:12:55Z WARNING Memory usage 94% (7.52GB/8GB). Eviction started.
 2026-07-02T07:13:00Z WARNING Connection pool exhausted (1000/1000).

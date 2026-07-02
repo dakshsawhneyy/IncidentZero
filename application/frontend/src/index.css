@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -7,52 +7,69 @@
 }
 
 :root {
-  --bg-primary: #0a0e1a;
-  --bg-secondary: #0d1117;
-  --bg-card: #111827;
-  --bg-card-hover: #1a2236;
-  --bg-panel: #0f1622;
-  --bg-terminal: #060d0d;
+  /* ── Backgrounds ── */
+  --bg-void:      #020408;
+  --bg-primary:   #04080f;
+  --bg-secondary: #060c14;
+  --bg-card:      #080f1a;
+  --bg-card-hover:#0d1826;
+  --bg-panel:     #060b13;
+  --bg-terminal:  #020608;
+  --bg-inset:     #030711;
 
-  --border: #1e2d3d;
-  --border-accent: #2a3f5f;
+  /* ── Borders ── */
+  --border:        #0f1f30;
+  --border-mid:    #162840;
+  --border-accent: #1e3a58;
+  --border-bright: #2a5480;
 
-  --text-primary: #e6edf3;
-  --text-secondary: #8b949e;
-  --text-muted: #484f58;
-  --text-code: #79c0ff;
+  /* ── Text ── */
+  --text-primary:   #c9d8e8;
+  --text-secondary: #6b8aa8;
+  --text-muted:     #2e4460;
+  --text-dim:       #1a2e44;
+  --text-code:      #5bc8fa;
+  --text-green:     #3dffa0;
 
-  --red: #ff4d4d;
-  --red-dim: #3d1515;
-  --red-glow: rgba(255, 77, 77, 0.15);
+  /* ── Signal colors ── phosphor-style */
+  --red:        #ff3b3b;
+  --red-dim:    #1a0808;
+  --red-glow:   rgba(255, 59, 59, 0.18);
+  --red-mid:    rgba(255, 59, 59, 0.08);
 
-  --orange: #f97316;
-  --orange-dim: #3d1f0d;
+  --orange:     #ff7b2a;
+  --orange-dim: #1a0c04;
+  --orange-mid: rgba(255, 123, 42, 0.08);
 
-  --yellow: #f59e0b;
-  --yellow-dim: #3d2f0a;
+  --yellow:     #ffd93b;
+  --yellow-dim: #1a1503;
+  --yellow-mid: rgba(255, 217, 59, 0.07);
 
-  --green: #22c55e;
-  --green-dim: #0d2d1a;
-  --green-glow: rgba(34, 197, 94, 0.12);
+  --green:      #00ff88;
+  --green-dim:  #001a0e;
+  --green-glow: rgba(0, 255, 136, 0.15);
+  --green-mid:  rgba(0, 255, 136, 0.07);
 
-  --blue: #3b82f6;
-  --blue-dim: #0d1f3d;
-  --blue-glow: rgba(59, 130, 246, 0.15);
+  --blue:       #2d8fff;
+  --blue-dim:   #041028;
+  --blue-glow:  rgba(45, 143, 255, 0.18);
+  --blue-mid:   rgba(45, 143, 255, 0.07);
 
-  --cyan: #06b6d4;
-  --cyan-dim: #0d2633;
+  --cyan:       #00d4ff;
+  --cyan-dim:   #001a22;
+  --cyan-mid:   rgba(0, 212, 255, 0.07);
 
-  --purple: #a855f7;
-  --purple-dim: #1e0d33;
+  --purple:     #c084fc;
+  --purple-dim: #130820;
+  --purple-mid: rgba(192, 132, 252, 0.07);
 
-  --accent: #3b82f6;
-  --accent-hover: #2563eb;
+  --accent:       #2d8fff;
+  --accent-hover: #1a7aef;
 
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 14px;
   color: var(--text-primary);
-  background: var(--bg-primary);
+  background: var(--bg-void);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -63,30 +80,41 @@ html, body, #root {
   min-height: 100vh;
 }
 
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* ── Global texture overlay ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.08) 2px,
+      rgba(0, 0, 0, 0.08) 4px
+    );
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.4;
 }
-::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
-}
+
+/* ── Scrollbars ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg-void); }
 ::-webkit-scrollbar-thumb {
   background: var(--border-accent);
-  border-radius: 3px;
+  border-radius: 2px;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: #3a4f6a;
-}
+::-webkit-scrollbar-thumb:hover { background: var(--border-bright); }
 
-button {
-  cursor: pointer;
-  font-family: inherit;
-}
-
-textarea, input {
-  font-family: inherit;
-}
+button { cursor: pointer; font-family: inherit; }
+textarea, input { font-family: inherit; }
 
 .mono {
-  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
 }
+
+/* ── Shared glow utilities ── */
+.glowRed    { box-shadow: 0 0 12px var(--red-glow),   inset 0 0 12px var(--red-mid); }
+.glowGreen  { box-shadow: 0 0 12px var(--green-glow), inset 0 0 12px var(--green-mid); }
+.glowBlue   { box-shadow: 0 0 12px var(--blue-glow),  inset 0 0 12px var(--blue-mid); }
