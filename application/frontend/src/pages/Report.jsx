@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { rootCauseAnswer } from '../data/incident001';
 import styles from './Report.module.css';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+
 function scoreRCA(rcaText) {
   const text = (rcaText || '').toLowerCase();
   let score = 0;
@@ -65,6 +67,7 @@ export default function Report() {
   const [tabVisits, setTabVisits] = useState({});
   const [animScore, setAnimScore] = useState(0);
   const [revealed, setRevealed] = useState(false);
+  const [incident, setIncident] = useState(null);
 
   useEffect(() => {
     try {
@@ -75,6 +78,15 @@ export default function Report() {
       setElapsed(e);
       setTabVisits(t);
     } catch (_) {}
+
+    fetch(`${API_BASE}/incidents`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setIncident(data[0]);
+        }
+      })
+      .catch(() => {});
 
     const timer = setTimeout(() => setRevealed(true), 200);
     return () => clearTimeout(timer);
@@ -120,7 +132,7 @@ export default function Report() {
           <span>Incident<strong>Zero</strong></span>
         </div>
         <span className={styles.topbarTitle}>Post-Incident Analysis</span>
-        <span className={styles.topbarMeta}>INC-001</span>
+        <span className={styles.topbarMeta}>{incident?.id || 'INC-001'}</span>
       </div>
 
       <div className={`${styles.main} ${revealed ? styles.visible : ''}`}>

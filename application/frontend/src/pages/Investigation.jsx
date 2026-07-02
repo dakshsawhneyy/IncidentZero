@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { incident001, logs, metrics, events, terminalResponses } from '../data/incident001';
+import { logs, metrics, events, terminalResponses } from '../data/incident001';
 import styles from './Investigation.module.css';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
 /* ── Metrics Panel ── */
 function MetricsPanel() {
@@ -305,6 +307,7 @@ export default function Investigation() {
   const [tabVisits, setTabVisits] = useState({});
   const [showIncidentModal, setShowIncidentModal] = useState(false);
   const [showAbandonModal, setShowAbandonModal] = useState(false);
+  const [incident, setIncident] = useState(null);
 
   // Notes — persisted so tab switches don't lose content
   const [notes, setNotesState] = useState(
@@ -345,6 +348,17 @@ export default function Investigation() {
       setElapsed(Math.floor((Date.now() - start) / 1000));
     }, 1000);
     return () => clearInterval(tick);
+  }, []);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/incidents`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setIncident(data[0]);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -390,6 +404,13 @@ export default function Investigation() {
     navigate('/');
   }
 
+  const incidentMeta = incident
+    ? {
+        ...incident,
+        severityLabel: incident.severity ? incident.severity.charAt(0).toUpperCase() + incident.severity.slice(1) : 'Critical',
+      }
+    : null;
+
   return (
     <div className={styles.workspace}>
       {/* Top bar */}
@@ -406,9 +427,9 @@ export default function Investigation() {
 
         <div className={styles.incidentTag}>
           <span className={styles.incidentFlash}>🔴</span>
-          <span className={styles.incidentId}>{incident001.id}</span>
+          <span className={styles.incidentId}>{incidentMeta?.id || '—'}</span>
           <span className={styles.incidentSep}>·</span>
-          <span className={styles.incidentTitle}>{incident001.title}</span>
+          <span className={styles.incidentTitle}>{incidentMeta?.title || 'Loading incident…'}</span>
         </div>
 
         <div className={styles.topbarRight}>
@@ -454,9 +475,9 @@ export default function Investigation() {
                 <div className={styles.summaryTitle}>Active Incident</div>
                 <span className={styles.summaryViewBtn}>View ↗</span>
               </div>
-              <div className={styles.summaryService}>{incident001.service}</div>
+              <div className={styles.summaryService}>{incidentMeta?.service || '—'}</div>
               <div className={styles.summaryDesc}>Latency: 80ms → 1.2s</div>
-              <div className={styles.summaryTime}>Started {incident001.startTime}</div>
+              <div className={styles.summaryTime}>Started {incidentMeta?.startTime || '—'}</div>
             </button>
           </div>
         </aside>
@@ -511,8 +532,8 @@ export default function Investigation() {
               <div className={styles.modalHeaderLeft}>
                 <span className={styles.modalFlash}>🔴</span>
                 <div>
-                  <div className={styles.modalSource}>PagerDuty · {incident001.date} · {incident001.startTime}</div>
-                  <div className={styles.modalTitle}>{incident001.title}</div>
+                  <div className={styles.modalSource}>PagerDuty · {incidentMeta?.date || 'Loading…'} · {incidentMeta?.startTime || '—'}</div>
+                  <div className={styles.modalTitle}>{incidentMeta?.title || 'Loading incident…'}</div>
                 </div>
               </div>
               <div className={styles.modalHeaderRight}>
@@ -526,29 +547,29 @@ export default function Investigation() {
 
               <div className={styles.modalSection}>
                 <div className={styles.modalSectionLabel}>Incident Description</div>
-                <p className={styles.modalDescription}>{incident001.description}</p>
+                <p className={styles.modalDescription}>{incidentMeta?.description || 'Waiting for the backend to provide detail.'}</p>
               </div>
 
               <div className={styles.modalMeta}>
                 <div className={styles.modalMetaItem}>
                   <span className={styles.modalMetaKey}>Incident ID</span>
-                  <span className={`${styles.modalMetaVal} ${styles.modalCode}`}>{incident001.id}</span>
+                  <span className={`${styles.modalMetaVal} ${styles.modalCode}`}>{incidentMeta?.id || '—'}</span>
                 </div>
                 <div className={styles.modalMetaItem}>
                   <span className={styles.modalMetaKey}>Severity</span>
-                  <span className={styles.modalMetaValRed}>{incident001.severityLabel}</span>
+                  <span className={styles.modalMetaValRed}>{incidentMeta?.severityLabel || 'Critical'}</span>
                 </div>
                 <div className={styles.modalMetaItem}>
                   <span className={styles.modalMetaKey}>Affected Service</span>
-                  <span className={`${styles.modalMetaVal} ${styles.modalCode}`}>{incident001.service}</span>
+                  <span className={`${styles.modalMetaVal} ${styles.modalCode}`}>{incidentMeta?.service || '—'}</span>
                 </div>
                 <div className={styles.modalMetaItem}>
                   <span className={styles.modalMetaKey}>Team</span>
-                  <span className={styles.modalMetaVal}>{incident001.team}</span>
+                  <span className={styles.modalMetaVal}>{incidentMeta?.team || '—'}</span>
                 </div>
                 <div className={`${styles.modalMetaItem} ${styles.modalMetaFull}`}>
                   <span className={styles.modalMetaKey}>SLO Breached</span>
-                  <span className={styles.modalMetaValRed}>{incident001.slo}</span>
+                  <span className={styles.modalMetaValRed}>{incidentMeta?.slo || '—'}</span>
                 </div>
               </div>
 
@@ -556,14 +577,14 @@ export default function Investigation() {
                 <span className={styles.modalImpactIcon}>⚠️</span>
                 <div>
                   <div className={styles.modalImpactLabel}>Customer Impact</div>
-                  <div className={styles.modalImpactText}>{incident001.customerImpact}</div>
+                  <div className={styles.modalImpactText}>{incidentMeta?.customerImpact || '—'}</div>
                 </div>
               </div>
 
               <div className={styles.modalSection}>
                 <div className={styles.modalSectionLabel}>Affected Services</div>
                 <div className={styles.modalServices}>
-                  {incident001.affectedServices.map(s => (
+                  {(incidentMeta?.affectedServices || []).map(s => (
                     <span key={s} className={styles.modalServiceBadge}>{s}</span>
                   ))}
                 </div>

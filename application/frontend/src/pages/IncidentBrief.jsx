@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { incident001 } from '../data/incident001';
 import styles from './IncidentBrief.module.css';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
 export default function IncidentBrief() {
   const navigate = useNavigate();
   const [revealed, setRevealed] = useState(false);
   const [now, setNow] = useState(new Date());
   const [lockedTool, setLockedTool] = useState(null);
+  const [incident, setIncident] = useState(null);
+  const [incidentError, setIncidentError] = useState('');
 
   useEffect(() => {
     const t = setTimeout(() => setRevealed(true), 300);
@@ -25,7 +28,27 @@ export default function IncidentBrief() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  useEffect(() => {
+    fetch(`${API_BASE}/incidents`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setIncident(data[0]);
+        } else {
+          setIncident(null);
+          setIncidentError('No incident is available yet.');
+        }
+      })
+      .catch(() => setIncidentError('Unable to load incident data from the backend.'));
+  }, []);
+
   const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const incidentMeta = incident
+    ? {
+        ...incident,
+        severityLabel: incident.severity ? incident.severity.charAt(0).toUpperCase() + incident.severity.slice(1) : 'Critical',
+      }
+    : null;
 
   function handleStart() {
     sessionStorage.setItem('incidentStart', Date.now().toString());
@@ -57,44 +80,44 @@ export default function IncidentBrief() {
               <span className={styles.pdFlash}>🔴</span>
               <span className={styles.pdSourceText}>PagerDuty</span>
               <span className={styles.pdSep}>·</span>
-              <span className={styles.pdSourceTime}>{incident001.date} · {incident001.startTime}</span>
+              <span className={styles.pdSourceTime}>{incidentMeta?.date || 'Loading…'} · {incidentMeta?.startTime || '—'}</span>
             </div>
-            <span className={styles.pdSeverity}>P1 · Critical</span>
+            <span className={styles.pdSeverity}>P1 · {incidentMeta?.severityLabel || 'Critical'}</span>
           </div>
 
           <div className={styles.pdBody}>
-            <h1 className={styles.pdTitle}>🚨 {incident001.title}</h1>
-            <p className={styles.pdDesc}>{incident001.description}</p>
+            <h1 className={styles.pdTitle}>🚨 {incidentMeta?.title || 'Loading incident…'}</h1>
+            <p className={styles.pdDesc}>{incidentMeta?.description || incidentError || 'Waiting for the backend to provide incident data.'}</p>
           </div>
 
           <div className={styles.pdMeta}>
             <div className={styles.metaItem}>
               <span className={styles.metaLabel}>Incident ID</span>
-              <span className={`${styles.metaValue} ${styles.mono}`}>{incident001.id}</span>
+              <span className={`${styles.metaValue} ${styles.mono}`}>{incidentMeta?.id || '—'}</span>
             </div>
             <div className={styles.metaItem}>
               <span className={styles.metaLabel}>Affected Service</span>
-              <span className={styles.metaValue}>{incident001.service}</span>
+              <span className={styles.metaValue}>{incidentMeta?.service || '—'}</span>
             </div>
             <div className={styles.metaItem}>
               <span className={styles.metaLabel}>SLO Breached</span>
-              <span className={`${styles.metaValue} ${styles.metaRed}`}>{incident001.slo}</span>
+              <span className={`${styles.metaValue} ${styles.metaRed}`}>{incidentMeta?.slo || '—'}</span>
             </div>
             <div className={styles.metaItem}>
               <span className={styles.metaLabel}>Team</span>
-              <span className={styles.metaValue}>{incident001.team}</span>
+              <span className={styles.metaValue}>{incidentMeta?.team || '—'}</span>
             </div>
           </div>
 
           <div className={styles.impactBox}>
             <span className={styles.impactIcon}>⚠️</span>
-            <span className={styles.impactText}>{incident001.customerImpact}</span>
+            <span className={styles.impactText}>{incidentMeta?.customerImpact || '—'}</span>
           </div>
 
           <div className={styles.affectedServices}>
             <span className={styles.affectedLabel}>Affected Services</span>
             <div className={styles.serviceList}>
-              {incident001.affectedServices.map(s => (
+              {(incidentMeta?.affectedServices || []).map((s) => (
                 <span key={s} className={styles.serviceBadge}>{s}</span>
               ))}
             </div>
