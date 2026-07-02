@@ -227,10 +227,7 @@ function NotesPanel({ notes, setNotes }) {
 }
 
 /* ── RCA Panel ── */
-function RCAPanel({ onSubmit }) {
-  const [whatHappened, setWhatHappened] = useState('');
-  const [rootCause, setRootCause] = useState('');
-  const [howFix, setHowFix] = useState('');
+function RCAPanel({ whatHappened, setWhatHappened, rootCause, setRootCause, howFix, setHowFix, onSubmit }) {
   const [error, setError] = useState('');
 
   function handleSubmit() {
@@ -246,7 +243,12 @@ function RCAPanel({ onSubmit }) {
     <div className={styles.rcaPanel}>
       <div className={styles.rcaHeader}>
         <span>🏁 Submit Root Cause Analysis</span>
-        <span className={styles.rcaHint}>Take your time — quality over speed</span>
+        <div className={styles.rcaHeaderRight}>
+          {(whatHappened || rootCause || howFix) && (
+            <span className={styles.draftSaved}>● draft saved</span>
+          )}
+          <span className={styles.rcaHint}>Take your time — quality over speed</span>
+        </div>
       </div>
       <div className={styles.rcaForm}>
         <label className={styles.rcaLabel}>What happened? <span className={styles.rcaOptional}>(optional)</span></label>
@@ -299,9 +301,42 @@ const TABS = [
 export default function Investigation() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('metrics');
-  const [notes, setNotes] = useState('');
   const [elapsed, setElapsed] = useState(0);
   const [tabVisits, setTabVisits] = useState({});
+  const [showIncidentModal, setShowIncidentModal] = useState(false);
+
+  // Notes — persisted so tab switches don't lose content
+  const [notes, setNotesState] = useState(
+    () => sessionStorage.getItem('iz_notes') || ''
+  );
+  function setNotes(v) {
+    setNotesState(v);
+    sessionStorage.setItem('iz_notes', v);
+  }
+
+  // RCA fields — lifted up so they survive tab switches + persisted
+  const [whatHappened, setWhatHappenedState] = useState(
+    () => sessionStorage.getItem('iz_rca_what') || ''
+  );
+  const [rootCause, setRootCauseState] = useState(
+    () => sessionStorage.getItem('iz_rca_root') || ''
+  );
+  const [howFix, setHowFixState] = useState(
+    () => sessionStorage.getItem('iz_rca_fix') || ''
+  );
+
+  function setWhatHappened(v) {
+    setWhatHappenedState(v);
+    sessionStorage.setItem('iz_rca_what', v);
+  }
+  function setRootCause(v) {
+    setRootCauseState(v);
+    sessionStorage.setItem('iz_rca_root', v);
+  }
+  function setHowFix(v) {
+    setHowFixState(v);
+    sessionStorage.setItem('iz_rca_fix', v);
+  }
 
   useEffect(() => {
     const start = parseInt(sessionStorage.getItem('incidentStart') || Date.now().toString(), 10);
@@ -309,6 +344,14 @@ export default function Investigation() {
       setElapsed(Math.floor((Date.now() - start) / 1000));
     }, 1000);
     return () => clearInterval(tick);
+  }, []);
+
+  useEffect(() => {
+    function onKeyDown(e) {
+      if (e.key === 'Escape') setShowIncidentModal(false);
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
   function handleTabClick(id) {
@@ -326,6 +369,11 @@ export default function Investigation() {
     sessionStorage.setItem('rca', JSON.stringify(rca));
     sessionStorage.setItem('elapsed', elapsed.toString());
     sessionStorage.setItem('tabVisits', JSON.stringify(tabVisits));
+    // Clear draft after submit
+    sessionStorage.removeItem('iz_rca_what');
+    sessionStorage.removeItem('iz_rca_root');
+    sessionStorage.removeItem('iz_rca_fix');
+    sessionStorage.removeItem('iz_notes');
     navigate('/report');
   }
 
@@ -367,7 +415,10 @@ export default function Investigation() {
               >
                 <span className={styles.sidebarIcon}>{tab.icon}</span>
                 <span className={styles.sidebarLabel}>{tab.label}</span>
-                {tabVisits[tab.id] && (
+                {tab.id === 'rca' && (whatHappened || rootCause || howFix) && (
+                  <span className={styles.draftDot} title="Draft saved" />
+                )}
+                {tab.id !== 'rca' && tabVisits[tab.id] && (
                   <span className={styles.visitBadge}>{tabVisits[tab.id]}</span>
                 )}
               </button>
@@ -375,12 +426,19 @@ export default function Investigation() {
           </div>
 
           <div className={styles.sidebarBottom}>
-            <div className={styles.incidentSummary}>
-              <div className={styles.summaryTitle}>Active Incident</div>
+            <button
+              className={styles.incidentSummary}
+              onClick={() => setShowIncidentModal(true)}
+              title="Click to view full incident details"
+            >
+              <div className={styles.summaryTopRow}>
+                <div className={styles.summaryTitle}>Active Incident</div>
+                <span className={styles.summaryViewBtn}>View ↗</span>
+              </div>
               <div className={styles.summaryService}>{incident001.service}</div>
               <div className={styles.summaryDesc}>Latency: 80ms → 1.2s</div>
               <div className={styles.summaryTime}>Started {incident001.startTime}</div>
-            </div>
+            </button>
           </div>
         </aside>
 
@@ -411,10 +469,100 @@ export default function Investigation() {
             {activeTab === 'events'   && <EventsPanel />}
             {activeTab === 'terminal' && <TerminalPanel />}
             {activeTab === 'notes'    && <NotesPanel notes={notes} setNotes={setNotes} />}
-            {activeTab === 'rca'      && <RCAPanel onSubmit={handleRCASubmit} />}
+            {activeTab === 'rca'      && <RCAPanel
+              whatHappened={whatHappened}
+              setWhatHappened={setWhatHappened}
+              rootCause={rootCause}
+              setRootCause={setRootCause}
+              howFix={howFix}
+              setHowFix={setHowFix}
+              onSubmit={handleRCASubmit}
+            />}
           </div>
         </main>
       </div>
+
+      {/* ── Incident Details Modal ── */}
+      {showIncidentModal && (
+        <div className={styles.modalBackdrop} onClick={() => setShowIncidentModal(false)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+
+            {/* Modal header */}
+            <div className={styles.modalHeader}>
+              <div className={styles.modalHeaderLeft}>
+                <span className={styles.modalFlash}>🔴</span>
+                <div>
+                  <div className={styles.modalSource}>PagerDuty · {incident001.date} · {incident001.startTime}</div>
+                  <div className={styles.modalTitle}>{incident001.title}</div>
+                </div>
+              </div>
+              <div className={styles.modalHeaderRight}>
+                <span className={styles.modalSeverity}>P1 · Critical</span>
+                <button className={styles.modalClose} onClick={() => setShowIncidentModal(false)}>✕</button>
+              </div>
+            </div>
+
+            {/* Modal body */}
+            <div className={styles.modalBody}>
+
+              <div className={styles.modalSection}>
+                <div className={styles.modalSectionLabel}>Incident Description</div>
+                <p className={styles.modalDescription}>{incident001.description}</p>
+              </div>
+
+              <div className={styles.modalMeta}>
+                <div className={styles.modalMetaItem}>
+                  <span className={styles.modalMetaKey}>Incident ID</span>
+                  <span className={`${styles.modalMetaVal} ${styles.modalCode}`}>{incident001.id}</span>
+                </div>
+                <div className={styles.modalMetaItem}>
+                  <span className={styles.modalMetaKey}>Severity</span>
+                  <span className={styles.modalMetaValRed}>{incident001.severityLabel}</span>
+                </div>
+                <div className={styles.modalMetaItem}>
+                  <span className={styles.modalMetaKey}>Affected Service</span>
+                  <span className={`${styles.modalMetaVal} ${styles.modalCode}`}>{incident001.service}</span>
+                </div>
+                <div className={styles.modalMetaItem}>
+                  <span className={styles.modalMetaKey}>Team</span>
+                  <span className={styles.modalMetaVal}>{incident001.team}</span>
+                </div>
+                <div className={`${styles.modalMetaItem} ${styles.modalMetaFull}`}>
+                  <span className={styles.modalMetaKey}>SLO Breached</span>
+                  <span className={styles.modalMetaValRed}>{incident001.slo}</span>
+                </div>
+              </div>
+
+              <div className={styles.modalImpact}>
+                <span className={styles.modalImpactIcon}>⚠️</span>
+                <div>
+                  <div className={styles.modalImpactLabel}>Customer Impact</div>
+                  <div className={styles.modalImpactText}>{incident001.customerImpact}</div>
+                </div>
+              </div>
+
+              <div className={styles.modalSection}>
+                <div className={styles.modalSectionLabel}>Affected Services</div>
+                <div className={styles.modalServices}>
+                  {incident001.affectedServices.map(s => (
+                    <span key={s} className={styles.modalServiceBadge}>{s}</span>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+
+            <div className={styles.modalFooter}>
+              <span className={styles.modalFooterNote}>
+                Press <kbd className={styles.kbd}>Esc</kbd> or click outside to close
+              </span>
+              <button className={styles.modalCloseBtn} onClick={() => setShowIncidentModal(false)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
