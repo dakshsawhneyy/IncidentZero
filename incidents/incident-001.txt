@@ -1,0 +1,9 @@
+INCIDENT #1
+
+Checkout API latency increased from 80ms → 1.2s.
+
+Customers unable to place orders.
+
+Severity: High
+
+Time starts now.
