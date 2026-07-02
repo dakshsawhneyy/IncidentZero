@@ -51,7 +51,7 @@
   font-size: 12px;
 }
 
-.navLogoText { color: var(--text-muted); letter-spacing: -0.3px; }
+.navLogoText { color: var(--text-secondary); letter-spacing: -0.3px; }
 .navLogoAccent {
   color: var(--text-primary);
   text-shadow: 0 0 20px rgba(45,143,255,0.35);
@@ -65,7 +65,7 @@
   gap: 7px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
 }
 
 .navStatusDot {
@@ -145,8 +145,8 @@
 }
 
 .termTitle {
-  font-size: 11px;
-  color: var(--text-dim);
+  font-size: 15px;
+  color: var(--text-muted);
   letter-spacing: 0.3px;
 }
 
@@ -169,9 +169,9 @@
 
 .termLine { white-space: pre-wrap; word-break: break-all; }
 
-.type_system  { color: var(--text-muted); }
+.type_system  { color: var(--text-secondary); }
 .type_ok      { color: var(--green); text-shadow: 0 0 8px rgba(0,255,136,0.3); }
-.type_sep     { color: var(--border-accent); }
+.type_sep     { color: var(--text-muted); }
 .type_blank   { min-height: 8px; }
 .type_alert   { color: var(--red); font-weight: 700; text-shadow: 0 0 10px rgba(255,59,59,0.5); letter-spacing: 0.5px; }
 .type_data    { color: var(--text-secondary); }
@@ -218,7 +218,7 @@
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 2.5px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   text-transform: uppercase;
 }
 
@@ -260,8 +260,8 @@
 
 .heroBtnMeta {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  color: var(--text-dim);
+  font-size: 12px;
+  color: var(--text-muted);
   letter-spacing: 0.5px;
   padding-left: 2px;
 }
@@ -330,10 +330,10 @@
 
 .dividerLabel {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
+  font-size: 15px;
   font-weight: 700;
   letter-spacing: 1px;
-  color: var(--text-dim);
+  color: var(--text-muted);
   white-space: nowrap;
 }
 
@@ -367,7 +367,7 @@
 .codeBlockLabel {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
-  color: var(--text-dim);
+  color: var(--text-muted);
   margin-left: 6px;
   letter-spacing: 0.3px;
 }
@@ -401,7 +401,7 @@
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 2.5px;
-  color: var(--text-dim);
+  color: var(--text-muted);
   text-transform: uppercase;
   margin-bottom: 14px;
 }
@@ -424,7 +424,7 @@
 .previewNote {
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
-  color: var(--text-dim);
+  color: var(--text-muted);
   letter-spacing: 0.3px;
   padding-left: 2px;
 }
@@ -465,7 +465,7 @@
   padding: 14px 22px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 12px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   border-right: 1px solid var(--border);
 }
 
@@ -488,13 +488,13 @@
   background: rgba(0,255,136,0.02);
 }
 
-.compareIcon      { color: var(--text-dim);  font-size: 11px; flex-shrink: 0; }
+.compareIcon      { color: var(--text-muted); font-size: 11px; flex-shrink: 0; }
 .compareIconGreen { color: var(--green);      font-size: 11px; flex-shrink: 0; text-shadow: 0 0 6px rgba(0,255,136,0.4); }
 
 .compareCaption {
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
-  color: var(--text-dim);
+  color: var(--text-muted);
   letter-spacing: 0.3px;
   border-left: 2px solid var(--border-mid);
   padding-left: 14px;
@@ -520,7 +520,7 @@
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 2.5px;
-  color: var(--text-dim);
+  color: var(--text-muted);
   text-transform: uppercase;
   margin-bottom: 16px;
 }
@@ -573,7 +573,7 @@
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 1px;
-  color: var(--text-dim);
+  color: var(--text-muted);
   text-transform: uppercase;
 }
 
@@ -683,7 +683,7 @@
   z-index: 1;
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
-  color: var(--text-dim);
+  color: var(--text-muted);
   letter-spacing: 0.5px;
 }
 
@@ -706,7 +706,7 @@
   border-top: 1px solid var(--border);
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
-  color: var(--text-dim);
+  color: var(--text-muted);
   letter-spacing: 0.5px;
 }
 
