@@ -38,7 +38,7 @@ const BOOT_LINES = [
   { text: '[  OK  ] incidents loaded: 1 active', type: 'ok', delay: 80 },
   { text: '[  OK  ] simulation engine ready', type: 'ok', delay: 60 },
   { text: '──────────────────────────────────────────────────', type: 'sep', delay: 40 },
-  { text: '🚨  INCOMING ALERT  ──  07:13:01 UTC', type: 'alert', delay: 300 },
+  { text: '  INCOMING ALERT  ──  07:13:01 UTC', type: 'alert', delay: 300 },
   { text: '', type: 'blank', delay: 0 },
   { text: '  SOURCE   PagerDuty', type: 'data', delay: 30 },
   { text: '  SERVICE  checkout-api  [production]', type: 'data', delay: 30 },
