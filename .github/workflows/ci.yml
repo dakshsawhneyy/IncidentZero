@@ -22,5 +22,10 @@ jobs:
     - name: Build and Push Frontend Image
       working-directory: application/frontend
       run: |
-        docker build -t ${{ secrets.DOCKER_USERNAME }}/incidentzero:v1 .
-        docker push ${{ secrets.DOCKER_USERNAME }}/incidentzero:v1
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/incidentzero-frontend:v1 .
+        docker push ${{ secrets.DOCKER_USERNAME }}/incidentzero-frontend:v1
+    - name: Build and Push Backend Image
+      working-directory: application/backend
+      run: |
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/incidentzero-backend:v1 .
+        docker push ${{ secrets.DOCKER_USERNAME }}/incidentzero-backend:v1
