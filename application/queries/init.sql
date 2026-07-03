@@ -24,7 +24,7 @@ INSERT INTO incidents (
   start_time, date, slo, description, affected_services, customer_impact
 ) VALUES (
   'Checkout API Latency Spike',
-  'Critical',
+  'P1',
   'Critical',
   'FIRING',
   'checkout-api',

@@ -115,6 +115,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
   padding: 12px 20px;
   background: var(--bg-panel);
   border-bottom: 1px solid var(--border);
@@ -124,6 +125,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  flex: 1;
+  min-width: 0;
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
   color: var(--text-secondary);
@@ -138,9 +141,19 @@
 
 .pdSourceText { font-weight: 700; color: var(--text-primary); }
 .pdSep        { color: var(--text-dim); }
-.pdSourceTime { color: var(--text-muted); font-size: 10px; }
+.pdSourceTime {
+  color: var(--text-muted);
+  font-size: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 .pdSeverity {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  white-space: nowrap;
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
   font-weight: 700;
@@ -151,6 +164,16 @@
   padding: 3px 10px;
   border-radius: 3px;
   text-shadow: 0 0 8px rgba(255,59,59,0.4);
+}
+
+@media (max-width: 640px) {
+  .pdHeader {
+    gap: 8px;
+  }
+
+  .pdSource {
+    overflow: hidden;
+  }
 }
 
 .pdBody {

@@ -407,7 +407,7 @@ export default function Investigation() {
   const incidentMeta = incident
     ? {
         ...incident,
-        severityLabel: incident.severity ? incident.severity.charAt(0).toUpperCase() + incident.severity.slice(1) : 'Critical',
+        severityLabel: incident.severityLabel || (incident.severity ? incident.severity.charAt(0).toUpperCase() + incident.severity.slice(1) : 'Critical'),
       }
     : null;
 
@@ -437,7 +437,7 @@ export default function Investigation() {
             <span className={styles.timerIcon}>⏱</span>
             <span className={styles.timerValue}>{formatTime(elapsed)}</span>
           </div>
-          <span className={styles.severity}>P1 Critical</span>
+          <span className={styles.severity}>{incidentMeta?.severity || 'P1'} · {incidentMeta?.severityLabel || 'Critical'}</span>
         </div>
       </div>
 

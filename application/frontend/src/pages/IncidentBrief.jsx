@@ -46,7 +46,7 @@ export default function IncidentBrief() {
   const incidentMeta = incident
     ? {
         ...incident,
-        severityLabel: incident.severity ? incident.severity.charAt(0).toUpperCase() + incident.severity.slice(1) : 'Critical',
+        severityLabel: incident.severityLabel || (incident.severity ? incident.severity.charAt(0).toUpperCase() + incident.severity.slice(1) : 'Critical'),
       }
     : null;
 
@@ -82,7 +82,7 @@ export default function IncidentBrief() {
               <span className={styles.pdSep}>·</span>
               <span className={styles.pdSourceTime}>{incidentMeta?.date || 'Loading…'} · {incidentMeta?.startTime || '—'}</span>
             </div>
-            <span className={styles.pdSeverity}>P1 · {incidentMeta?.severityLabel || 'Critical'}</span>
+            <span className={styles.pdSeverity}>{incidentMeta?.severity || 'P1'} · {incidentMeta?.severityLabel || 'Critical'}</span>
           </div>
 
           <div className={styles.pdBody}>

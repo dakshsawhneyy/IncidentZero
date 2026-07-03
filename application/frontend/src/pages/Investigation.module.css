@@ -133,6 +133,10 @@
 }
 
 .severity {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  white-space: nowrap;
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
   font-weight: 700;
@@ -926,6 +930,10 @@
 .modalHeaderRight { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 
 .modalSeverity {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  white-space: nowrap;
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
   font-weight: 700;
@@ -936,7 +944,6 @@
   padding: 4px 10px;
   border-radius: 3px;
   text-shadow: 0 0 8px rgba(255,59,59,0.4);
-  white-space: nowrap;
 }
 
 .modalClose {
