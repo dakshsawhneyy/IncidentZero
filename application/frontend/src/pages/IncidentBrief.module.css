@@ -89,6 +89,74 @@
   transform: translateY(0);
 }
 
+.incidentShelf {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.incidentShelfItem {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 18px 20px;
+  background: linear-gradient(180deg, rgba(8, 12, 20, 0.98), rgba(10, 18, 32, 0.98));
+  border: 1px solid transparent;
+  border-radius: 14px;
+  color: var(--text-primary);
+  text-align: left;
+  transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+}
+
+.incidentShelfItem:hover {
+  transform: translateY(-2px);
+  border-color: rgba(45, 143, 255, 0.3);
+  box-shadow: 0 20px 40px rgba(45, 143, 255, 0.08);
+}
+
+.incidentShelfActive {
+  border-color: var(--green);
+  box-shadow: 0 24px 46px rgba(0, 255, 136, 0.14);
+}
+
+.incidentShelfHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 12px;
+}
+
+.incidentShelfId {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.incidentShelfSeverity {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--red);
+  background: rgba(255, 59, 59, 0.12);
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.incidentShelfTitle {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.incidentShelfMeta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
 /* ── PD Alert Card ── */
 .pdCard {
   background: var(--bg-card);

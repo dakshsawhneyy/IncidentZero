@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Landing.module.css';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+
 /* ── Typewriter hook ── */
 function useTypewriter(lines, speed = 28) {
   const [displayed, setDisplayed] = useState([]);
@@ -83,10 +85,14 @@ function CodeBlock({ label, content, color = 'var(--green)' }) {
 /* ── Main Component ── */
 export default function Landing() {
   const navigate = useNavigate();
+  const termRef = useRef(null);
   const [bootDone, setBootDone] = useState(false);
   const [showCursor, setShowCursor] = useState(true);
-  const termRef = useRef(null);
-
+  const [incidents, setIncidents] = useState([]);
+  const [selectedIncidentId, setSelectedIncidentId] = useState(() => {
+    const storedId = Number(sessionStorage.getItem('selectedIncidentId'));
+    return Number.isInteger(storedId) && storedId > 0 ? storedId : null;
+  });
   const { displayed, done } = useTypewriter(BOOT_LINES, 22);
 
   useEffect(() => {
@@ -98,6 +104,34 @@ export default function Landing() {
     const t = setInterval(() => setShowCursor(c => !c), 530);
     return () => clearInterval(t);
   }, []);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/incidents`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setIncidents(data);
+          const storedId = Number(sessionStorage.getItem('selectedIncidentId'));
+          const chosen = data.find(item => item.rawId === storedId) || data[0];
+          setSelectedIncidentId(chosen.rawId);
+          sessionStorage.setItem('selectedIncidentId', chosen.rawId);
+        } else {
+          setIncidents([]);
+        }
+      })
+      .catch(() => setIncidents([]));
+  }, []);
+
+  const activeIncident = incidents.find(item => item.rawId === selectedIncidentId) || incidents[0] || null;
+  const incidentCount = incidents.length;
+
+  function handleStart() {
+    if (activeIncident) {
+      sessionStorage.setItem('selectedIncidentId', activeIncident.rawId);
+    }
+    sessionStorage.setItem('incidentStart', Date.now().toString());
+    navigate('/incident');
+  }
 
   // Auto-scroll terminal
   useEffect(() => {
@@ -118,7 +152,7 @@ export default function Landing() {
         <div className={styles.navRight}>
           <span className={styles.navStatus}>
             <span className={styles.navStatusDot} />
-            1 active incident
+            {incidentCount} active incident{incidentCount === 1 ? '' : 's'}
           </span>
           <span className={styles.navBeta}>v0.1 BETA</span>
         </div>
@@ -173,11 +207,11 @@ export default function Landing() {
             what do you check first?
           </p>
           <div className={styles.heroActions}>
-            <button className={styles.btnRespond} onClick={() => navigate('/incident')}>
+            <button className={styles.btnRespond} onClick={handleStart}>
               <span className={styles.btnRespondDot} />
-              respond to incident #001
+              respond to {activeIncident ? activeIncident.id : 'active incident'}
             </button>
-            <div className={styles.heroBtnMeta}>no signup · ~15 min · P1 severity</div>
+            <div className={styles.heroBtnMeta}>{activeIncident ? `${activeIncident.severity} severity · ${activeIncident.service}` : 'no signup · ~15 min · incident ready'}</div>
           </div>
         </div>
       </section>
@@ -282,6 +316,48 @@ export default function Landing() {
               Check dependency metrics first.
             </div>
           </div>
+        </div>
+      </section>
+      
+      {/* ── Divider ── */}
+      <div className={styles.sectionDivider}>
+        <span className={styles.dividerLine} />
+        <span className={styles.dividerLabel}>// Incidents</span>
+        <span className={styles.dividerLine} />
+      </div>
+
+      {/* ── Incident showcase ── */}
+      <section className={styles.heroFeature}>
+        <div className={styles.featureHeader}>
+          <h2 className={styles.featureTitle}>Step into the incident details before the investigation begins</h2>
+        </div>
+        <p className={styles.featureCopy}>
+          Review the alert, impacted service, and context first. Then click through to start the investigation timer.
+        </p>
+
+        {activeIncident && (
+          <div className={styles.featureCard}>
+            <div className={styles.featureCardTop}>
+              <span className={styles.featureBadge}>{activeIncident.severity}</span>
+              <span className={styles.featureService}>{activeIncident.service}</span>
+            </div>
+            <h3 className={styles.featureCardTitle}>{activeIncident.title}</h3>
+            <p className={styles.featureCardDesc}>{activeIncident.description}</p>
+            <div className={styles.featureCardMeta}>
+              <span>{activeIncident.team}</span>
+              <span>{activeIncident.date}</span>
+            </div>
+          </div>
+        )}
+
+        <div className={styles.heroActionsGroup}>
+          <button className={styles.btnRespond} onClick={handleStart}>
+            <span className={styles.btnRespondDot} />
+            respond to {activeIncident ? activeIncident.id : 'active incident'}
+          </button>
+          <button className={styles.btnSecondary} type="button" onClick={() => navigate('/incidents')}>
+            Browse all incidents
+          </button>
         </div>
       </section>
 

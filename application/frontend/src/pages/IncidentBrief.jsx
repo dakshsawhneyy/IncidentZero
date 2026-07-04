@@ -9,6 +9,11 @@ export default function IncidentBrief() {
   const [revealed, setRevealed] = useState(false);
   const [now, setNow] = useState(new Date());
   const [lockedTool, setLockedTool] = useState(null);
+  const [incidents, setIncidents] = useState([]);
+  const [selectedIncidentId, setSelectedIncidentId] = useState(() => {
+    const stored = Number(sessionStorage.getItem('selectedIncidentId'));
+    return Number.isInteger(stored) && stored > 0 ? stored : null;
+  });
   const [incident, setIncident] = useState(null);
   const [incidentError, setIncidentError] = useState('');
 
@@ -33,7 +38,10 @@ export default function IncidentBrief() {
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
-          setIncident(data[0]);
+          setIncidents(data);
+          const chosen = data.find(item => item.rawId === selectedIncidentId) || data[0];
+          setSelectedIncidentId(chosen.rawId);
+          setIncident(chosen);
         } else {
           setIncident(null);
           setIncidentError('No incident is available yet.');
@@ -51,9 +59,12 @@ export default function IncidentBrief() {
     : null;
 
   function handleStart() {
+    if (incident?.rawId) sessionStorage.setItem('selectedIncidentId', incident.rawId);
     sessionStorage.setItem('incidentStart', Date.now().toString());
     navigate('/investigate');
   }
+
+  const incidentCount = incidents.length;
 
   return (
     <div className={styles.page}>
@@ -73,6 +84,29 @@ export default function IncidentBrief() {
 
       {/* Main */}
       <div className={`${styles.main} ${revealed ? styles.visible : ''}`}>
+        {incidentCount > 1 && (
+          <div className={styles.incidentShelf}>
+            {incidents.map((item) => (
+              <button
+                key={item.rawId}
+                className={`${styles.incidentShelfItem} ${incident?.rawId === item.rawId ? styles.incidentShelfActive : ''}`}
+                onClick={() => {
+                  setIncident(item);
+                  setSelectedIncidentId(item.rawId);
+                  sessionStorage.setItem('selectedIncidentId', item.rawId);
+                }}
+              >
+                <div className={styles.incidentShelfHeader}>
+                  <span className={styles.incidentShelfId}>{item.id}</span>
+                  <span className={styles.incidentShelfSeverity}>{item.severity}</span>
+                </div>
+                <div className={styles.incidentShelfTitle}>{item.title}</div>
+                <div className={styles.incidentShelfMeta}>{item.service} · {item.team}</div>
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* PagerDuty-style alert */}
         <div className={styles.pdCard}>
           <div className={styles.pdHeader}>

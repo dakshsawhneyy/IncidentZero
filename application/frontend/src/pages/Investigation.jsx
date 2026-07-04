@@ -310,6 +310,11 @@ export default function Investigation() {
   const [tabVisits, setTabVisits] = useState({});
   const [showIncidentModal, setShowIncidentModal] = useState(false);
   const [showAbandonModal, setShowAbandonModal] = useState(false);
+  const [incidents, setIncidents] = useState([]);
+  const [selectedIncidentId, setSelectedIncidentId] = useState(() => {
+    const stored = Number(sessionStorage.getItem('selectedIncidentId'));
+    return Number.isInteger(stored) && stored > 0 ? stored : null;
+  });
   const [incident, setIncident] = useState(null);
   const [logs, setLogs] = useState([]);
   const [metrics, setMetrics] = useState([]);
@@ -362,7 +367,11 @@ export default function Investigation() {
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
-          setIncident(data[0]);
+          setIncidents(data);
+          const chosen = data.find(item => item.rawId === selectedIncidentId) || data[0];
+          setSelectedIncidentId(chosen.rawId);
+          setIncident(chosen);
+          sessionStorage.setItem('selectedIncidentId', chosen.rawId);
         }
       })
       .catch(() => {});

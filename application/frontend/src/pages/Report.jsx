@@ -79,11 +79,13 @@ export default function Report() {
       setTabVisits(t);
     } catch (_) {}
 
+    const storedId = Number(sessionStorage.getItem('selectedIncidentId'));
     fetch(`${API_BASE}/incidents`)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
-          setIncident(data[0]);
+          const chosen = data.find(item => item.rawId === storedId) || data[0];
+          setIncident(chosen);
         }
       })
       .catch(() => {});
