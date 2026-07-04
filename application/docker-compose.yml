@@ -1,16 +1,29 @@
 version: '3.9'
 services:
-  postgres:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+  frontend:
+    image: dakshsawhneyy/incidentzero-frontend:v1
+    container_name: frontend
+    restart: unless-stopped
     ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - "80:80"
+    depends_on: 
+      - incidentzero
+    networks:
+      - capstone
+  backend:
+    image: dakshsawhneyy/incidentzero-backend:v1
+    container_name: backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      NODE_ENV: development
+      PORT: 4000
+      DB_SSL: true
+      CORS_ORIGIN: http://localhost:5173
+    networks:
+      - incidentzero
 
-volumes:
-  postgres_data:
+networks:
+  incidentzero:
