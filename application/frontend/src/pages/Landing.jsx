@@ -211,7 +211,7 @@ export default function Landing() {
               <span className={styles.btnRespondDot} />
               respond to {activeIncident ? activeIncident.id : 'active incident'}
             </button>
-            <div className={styles.heroBtnMeta}>{activeIncident ? `${activeIncident.severity} severity · ${activeIncident.service}` : 'no signup · ~15 min · incident ready'}</div>
+            <div className={styles.heroBtnMeta}>{activeIncident ? `${activeIncident.severityLabel || activeIncident.severity} severity · ${activeIncident.service}` : 'no signup · ~15 min · incident ready'}</div>
           </div>
         </div>
       </section>
@@ -329,23 +329,48 @@ export default function Landing() {
       {/* ── Incident showcase ── */}
       <section className={styles.heroFeature}>
         <div className={styles.featureHeader}>
-          <h2 className={styles.featureTitle}>Step into the incident details before the investigation begins</h2>
+          <span className={styles.featureTag}>FEATURED INCIDENT</span>
+          <h2 className={styles.featureTitle}>Preview the exact alert and context before you start investigating.</h2>
         </div>
         <p className={styles.featureCopy}>
-          Review the alert, impacted service, and context first. Then click through to start the investigation timer.
+          This is the incident you’ll be assigned next. Read the summary, see the affected service, and verify it matches your expectations before you begin.
         </p>
 
         {activeIncident && (
           <div className={styles.featureCard}>
             <div className={styles.featureCardTop}>
-              <span className={styles.featureBadge}>{activeIncident.severity}</span>
+              <span className={styles.featureBadge}>{activeIncident.severityLabel || activeIncident.severity}</span>
               <span className={styles.featureService}>{activeIncident.service}</span>
             </div>
             <h3 className={styles.featureCardTitle}>{activeIncident.title}</h3>
             <p className={styles.featureCardDesc}>{activeIncident.description}</p>
+            <div className={styles.featureCardStats}>
+              <div className={styles.featureStat}>
+                <span className={styles.featureStatLabel}>Team</span>
+                <span>{activeIncident.team}</span>
+              </div>
+              <div className={styles.featureStat}>
+                <span className={styles.featureStatLabel}>Started</span>
+                <span>{activeIncident.date}</span>
+              </div>
+              <div className={styles.featureStat}>
+                <span className={styles.featureStatLabel}>SLO</span>
+                <span>{activeIncident.slo || 'n/a'}</span>
+              </div>
+            </div>
+            <div className={styles.featureBenefits}>
+              <div className={styles.featureBenefit}>
+                <strong>What you know</strong>
+                <span>Service, impact, and team context up-front.</span>
+              </div>
+              <div className={styles.featureBenefit}>
+                <strong>What you avoid</strong>
+                <span>Jumping into metrics without the incident story.</span>
+              </div>
+            </div>
             <div className={styles.featureCardMeta}>
-              <span>{activeIncident.team}</span>
-              <span>{activeIncident.date}</span>
+              <span>{activeIncident.status || 'Status unknown'}</span>
+              <span>{activeIncident.severityLabel || activeIncident.severity}</span>
             </div>
           </div>
         )}
@@ -354,9 +379,6 @@ export default function Landing() {
           <button className={styles.btnRespond} onClick={handleStart}>
             <span className={styles.btnRespondDot} />
             respond to {activeIncident ? activeIncident.id : 'active incident'}
-          </button>
-          <button className={styles.btnSecondary} type="button" onClick={() => navigate('/incidents')}>
-            Browse all incidents
           </button>
         </div>
       </section>

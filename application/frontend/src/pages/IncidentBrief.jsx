@@ -98,7 +98,7 @@ export default function IncidentBrief() {
               >
                 <div className={styles.incidentShelfHeader}>
                   <span className={styles.incidentShelfId}>{item.id}</span>
-                  <span className={styles.incidentShelfSeverity}>{item.severity}</span>
+                  <span className={styles.incidentShelfSeverity}>{item.severityLabel || item.severity}</span>
                 </div>
                 <div className={styles.incidentShelfTitle}>{item.title}</div>
                 <div className={styles.incidentShelfMeta}>{item.service} · {item.team}</div>
@@ -116,7 +116,7 @@ export default function IncidentBrief() {
               <span className={styles.pdSep}>·</span>
               <span className={styles.pdSourceTime}>{incidentMeta?.date || 'Loading…'} · {incidentMeta?.startTime || '—'}</span>
             </div>
-            <span className={styles.pdSeverity}>{incidentMeta?.severity || 'P1'} · {incidentMeta?.severityLabel || 'Critical'}</span>
+            <span className={styles.pdSeverity}>{incidentMeta?.severityLabel || incidentMeta?.severity || 'Critical'}</span>
           </div>
 
           <div className={styles.pdBody}>
@@ -155,6 +155,12 @@ export default function IncidentBrief() {
                 <span key={s} className={styles.serviceBadge}>{s}</span>
               ))}
             </div>
+          </div>
+
+          <div className={styles.browseRow}>
+            <button className={styles.viewAllBtn} onClick={() => navigate('/incidents')}>
+              Didn’t like this incident? View all incidents
+            </button>
           </div>
         </div>
 

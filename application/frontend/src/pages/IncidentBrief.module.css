@@ -359,6 +359,32 @@
   text-shadow: 0 0 8px rgba(0,212,255,0.3);
 }
 
+.browseRow {
+  margin: 20px 20px 0;
+}
+
+.viewAllBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.05);
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.viewAllBtn:hover {
+  transform: translateY(-1px);
+  background: rgba(255,255,255,0.08);
+}
+
 /* ── Tools Panel ── */
 .instructions {
   background: var(--bg-card);

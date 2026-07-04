@@ -5,6 +5,10 @@ import styles from './Incidents.module.css';
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 const SEVERITY_FILTERS = ['All', 'Critical', 'High', 'Medium', 'Low'];
 
+function normalizeSeverity(incident) {
+  return (incident.severityLabel || incident.severity || '').toString().trim().toLowerCase();
+}
+
 export default function Incidents() {
   const navigate = useNavigate();
   const [incidents, setIncidents] = useState([]);
@@ -31,7 +35,8 @@ export default function Incidents() {
   }, []);
 
   const filteredIncidents = incidents.filter((incident) => {
-    return severityFilter === 'All' || incident.severity?.toLowerCase() === severityFilter.toLowerCase();
+    return severityFilter === 'All'
+      || normalizeSeverity(incident) === severityFilter.toLowerCase();
   });
 
   const selectedIncident = filteredIncidents.find((item) => item.rawId === selectedIncidentId) || filteredIncidents[0] || null;
@@ -94,7 +99,7 @@ export default function Incidents() {
                 >
                   <div className={styles.itemHeader}>
                     <span className={styles.itemTitle}>{incident.title}</span>
-                    <span className={styles.itemSeverity}>{incident.severity}</span>
+                    <span className={styles.itemSeverity}>{incident.severityLabel || incident.severity}</span>
                   </div>
                   <div className={styles.itemMeta}>{incident.service} · {incident.team}</div>
                 </button>
@@ -117,7 +122,7 @@ export default function Incidents() {
           {selectedIncident ? (
             <div className={styles.detailCard}>
               <div className={styles.detailTop}>
-                <span className={styles.badge}>{selectedIncident.severity}</span>
+                <span className={styles.badge}>{selectedIncident.severityLabel || selectedIncident.severity}</span>
                 <span className={styles.incidentId}>{selectedIncident.id}</span>
               </div>
               <div className={styles.infoGrid}>
