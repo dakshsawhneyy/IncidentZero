@@ -157,11 +157,6 @@ export default function IncidentBrief() {
             </div>
           </div>
 
-          <div className={styles.browseRow}>
-            <button className={styles.viewAllBtn} onClick={() => navigate('/incidents')}>
-              Didn’t like this incident? View all incidents
-            </button>
-          </div>
         </div>
 
         {/* Instructions panel */}
@@ -203,10 +198,15 @@ export default function IncidentBrief() {
             <span>⏱</span>
             <span>Timer starts when you click. Investigate at your own pace — but the clock is watching.</span>
           </div>
-          <button className={styles.startBtn} onClick={handleStart}>
-            <span className={styles.startDot}></span>
-            Start Investigation
-          </button>
+          <div className={styles.ctaActions}>
+            <button className={styles.startBtn} onClick={handleStart}>
+              <span className={styles.startDot}></span>
+              Start Investigation
+            </button>
+            <button className={styles.browseBtn} onClick={() => navigate('/incidents')}>
+              Browse other incidents
+            </button>
+          </div>
           <p className={styles.ctaNote}>
             No instructions. No hints. Just signals, logs, and a timer.
           </p>
