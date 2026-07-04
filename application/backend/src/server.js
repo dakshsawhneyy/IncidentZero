@@ -124,6 +124,16 @@ function formatTerminalRow(row) {
   };
 }
 
+function formatRootCauseRow(row) {
+  return {
+    primaryCause: row.primary_cause,
+    explanation: row.explanation,
+    keyClues: row.key_clues || [],
+    investigationPath: row.investigation_path || [],
+    commonMistakes: row.common_mistakes || [],
+  };
+}
+
 const REQUIRED_FIELDS = [
   'title', 'severity', 'status', 'service',
   'team', 'startTime', 'date', 'slo',
@@ -267,6 +277,29 @@ app.get('/incidents/:id/terminal', async (req, res) => {
   } catch (err) {
     console.error('GET /incidents/:id/terminal error:', err.message);
     res.status(500).json({ error: 'Failed to load terminal commands' });
+  }
+});
+
+// ── GET /incidents/:id/root-cause ────────────────────────────
+app.get('/incidents/:id/root-cause', async (req, res) => {
+  const rawId = Number(req.params.id);
+  if (!Number.isInteger(rawId) || rawId < 1) {
+    return res.status(400).json({ error: 'Invalid incident id' });
+  }
+
+  try {
+    const { rows } = await pool.query(
+      `SELECT primary_cause, explanation, key_clues, investigation_path, common_mistakes
+       FROM incident_root_cause_analysis
+       WHERE incident_id = $1`,
+      [rawId]
+    );
+
+    if (!rows.length) return res.status(404).json({ error: 'Root cause analysis not found' });
+    res.json(formatRootCauseRow(rows[0]));
+  } catch (err) {
+    console.error('GET /incidents/:id/root-cause error:', err.message);
+    res.status(500).json({ error: 'Failed to load root cause analysis' });
   }
 });
 

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { rootCauseAnswer } from '../data/incident001';
 import styles from './Report.module.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
@@ -68,6 +67,7 @@ export default function Report() {
   const [animScore, setAnimScore] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [incident, setIncident] = useState(null);
+  const [rootCauseAnswer, setRootCauseAnswer] = useState(null);
 
   useEffect(() => {
     try {
@@ -91,6 +91,21 @@ export default function Report() {
     const timer = setTimeout(() => setRevealed(true), 200);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (!incident?.id) return;
+
+    fetch(`${API_BASE}/incidents/${incident.rawId}/root-cause`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.primaryCause) {
+          setRootCauseAnswer(data);
+        }
+      })
+      .catch(() => {
+        setRootCauseAnswer(null);
+      });
+  }, [incident?.rawId]);
 
   const rcaScore = rca ? scoreRCA(rca.rootCause + ' ' + rca.whatHappened) : { score: 0, hints: [] };
   const tabScore = scoreTabVisits(tabVisits);
@@ -212,27 +227,33 @@ export default function Report() {
           {/* Actual root cause */}
           <div className={`${styles.card} ${styles.cardHighlight}`}>
             <div className={styles.cardHeader}>🎯 Actual Root Cause</div>
-            <div className={styles.rootCausePrimary}>{rootCauseAnswer.primaryCause}</div>
-            <p className={styles.rootCauseExplain}>{rootCauseAnswer.explanation}</p>
+            {rootCauseAnswer ? (
+              <>
+                <div className={styles.rootCausePrimary}>{rootCauseAnswer.primaryCause}</div>
+                <p className={styles.rootCauseExplain}>{rootCauseAnswer.explanation}</p>
 
-            <div className={styles.clueSection}>
-              <div className={styles.clueTitle}>Key Clues to Find</div>
-              <div className={styles.clueList}>
-                {rootCauseAnswer.keyClues.map((c, i) => (
-                  <div key={i} className={styles.clueRow}>
-                    <span className={styles.clueNum}>{i + 1}</span>
-                    <span>{c}</span>
+                <div className={styles.clueSection}>
+                  <div className={styles.clueTitle}>Key Clues to Find</div>
+                  <div className={styles.clueList}>
+                    {rootCauseAnswer.keyClues.map((c, i) => (
+                      <div key={i} className={styles.clueRow}>
+                        <span className={styles.clueNum}>{i + 1}</span>
+                        <span>{c}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
+              </>
+            ) : (
+              <p className={styles.rcaText}>Loading root cause analysis...</p>
+            )}
           </div>
 
           {/* Ideal investigation path */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>🗺 Ideal Investigation Path</div>
             <div className={styles.pathList}>
-              {rootCauseAnswer.investigationPath.map((p, i) => (
+              {(rootCauseAnswer?.investigationPath || []).map((p, i) => (
                 <div key={i} className={styles.pathRow}>
                   <div className={styles.pathNum}>{i + 1}</div>
                   <div className={styles.pathText}>{p}</div>
@@ -248,7 +269,7 @@ export default function Report() {
           <div className={styles.card}>
             <div className={styles.cardHeader}>⚠️ Common Mistakes in This Incident</div>
             <div className={styles.mistakeList}>
-              {rootCauseAnswer.commonMistakes.map((m, i) => (
+              {(rootCauseAnswer?.commonMistakes || []).map((m, i) => (
                 <div key={i} className={styles.mistakeRow}>
                   <span className={styles.mistakeIcon}>⚠</span>
                   <span>{m}</span>
