@@ -84,6 +84,46 @@ function formatIncident(row) {
   };
 }
 
+function formatLogRow(row) {
+  return {
+    time: row.time,
+    service: row.service,
+    level: row.level,
+    message: row.message,
+  };
+}
+
+function formatMetricRow(row) {
+  return {
+    name: row.metric_name,
+    label: row.label,
+    before: row.before_value,
+    after: row.after_value,
+    change: row.change_value,
+    status: row.status,
+    unit: row.unit,
+    sparkline: row.sparkline || [],
+  };
+}
+
+function formatEventRow(row) {
+  return {
+    time: row.time,
+    type: row.type,
+    source: row.source,
+    reason: row.reason,
+    message: row.message,
+    count: row.count,
+  };
+}
+
+function formatTerminalRow(row) {
+  return {
+    command: row.command,
+    output: row.output,
+  };
+}
+
 const REQUIRED_FIELDS = [
   'title', 'severity', 'status', 'service',
   'team', 'startTime', 'date', 'slo',
@@ -137,6 +177,96 @@ app.get('/incidents/:id', async (req, res) => {
   } catch (err) {
     console.error('GET /incidents/:id error:', err.message);
     res.status(500).json({ error: 'Failed to load incident' });
+  }
+});
+
+// ── GET /incidents/:id/logs ───────────────────────────────────
+app.get('/incidents/:id/logs', async (req, res) => {
+  const rawId = Number(req.params.id);
+  if (!Number.isInteger(rawId) || rawId < 1) {
+    return res.status(400).json({ error: 'Invalid incident id' });
+  }
+
+  try {
+    const { rows } = await pool.query(
+      `SELECT to_char(timestamp AT TIME ZONE 'UTC', 'HH24:MI:SS') AS time,
+              service, level, message
+       FROM incident_logs
+       WHERE incident_id = $1
+       ORDER BY timestamp ASC`,
+      [rawId]
+    );
+    res.json(rows.map(formatLogRow));
+  } catch (err) {
+    console.error('GET /incidents/:id/logs error:', err.message);
+    res.status(500).json({ error: 'Failed to load incident logs' });
+  }
+});
+
+// ── GET /incidents/:id/metrics ─────────────────────────────────
+app.get('/incidents/:id/metrics', async (req, res) => {
+  const rawId = Number(req.params.id);
+  if (!Number.isInteger(rawId) || rawId < 1) {
+    return res.status(400).json({ error: 'Invalid incident id' });
+  }
+
+  try {
+    const { rows } = await pool.query(
+      `SELECT metric_name, label, before_value, after_value, change_value, status, unit, sparkline
+       FROM incident_metrics
+       WHERE incident_id = $1
+       ORDER BY id ASC`,
+      [rawId]
+    );
+    res.json(rows.map(formatMetricRow));
+  } catch (err) {
+    console.error('GET /incidents/:id/metrics error:', err.message);
+    res.status(500).json({ error: 'Failed to load incident metrics' });
+  }
+});
+
+// ── GET /incidents/:id/events ──────────────────────────────────
+app.get('/incidents/:id/events', async (req, res) => {
+  const rawId = Number(req.params.id);
+  if (!Number.isInteger(rawId) || rawId < 1) {
+    return res.status(400).json({ error: 'Invalid incident id' });
+  }
+
+  try {
+    const { rows } = await pool.query(
+      `SELECT to_char(timestamp AT TIME ZONE 'UTC', 'HH24:MI:SS') AS time,
+              type, source, reason, message, count
+       FROM incident_events
+       WHERE incident_id = $1
+       ORDER BY timestamp ASC`,
+      [rawId]
+    );
+    res.json(rows.map(formatEventRow));
+  } catch (err) {
+    console.error('GET /incidents/:id/events error:', err.message);
+    res.status(500).json({ error: 'Failed to load incident events' });
+  }
+});
+
+// ── GET /incidents/:id/terminal ───────────────────────────────
+app.get('/incidents/:id/terminal', async (req, res) => {
+  const rawId = Number(req.params.id);
+  if (!Number.isInteger(rawId) || rawId < 1) {
+    return res.status(400).json({ error: 'Invalid incident id' });
+  }
+
+  try {
+    const { rows } = await pool.query(
+      `SELECT command, output
+       FROM terminal_commands
+       WHERE incident_id = $1
+       ORDER BY id ASC`,
+      [rawId]
+    );
+    res.json(rows.map(formatTerminalRow));
+  } catch (err) {
+    console.error('GET /incidents/:id/terminal error:', err.message);
+    res.status(500).json({ error: 'Failed to load terminal commands' });
   }
 });
 
