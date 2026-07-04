@@ -1,15 +1,18 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { logs, metrics, events, terminalResponses } from '../data/incident001';
 import styles from './Investigation.module.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
 /* ── Metrics Panel ── */
-function MetricsPanel() {
+function MetricsPanel({ metrics }) {
   const statusColor = { critical: 'var(--red)', warning: 'var(--yellow)', healthy: 'var(--green)' };
 
   function Spark({ data, status }) {
+    if (!Array.isArray(data) || data.length === 0) {
+      return <div className={styles.sparkPlaceholder}>No data</div>;
+    }
+
     const max = Math.max(...data);
     const min = Math.min(...data);
     const range = max - min || 1;
@@ -28,7 +31,7 @@ function MetricsPanel() {
 
   return (
     <div className={styles.metricsGrid}>
-      {Object.values(metrics).map(m => (
+      {metrics.map(m => (
         <div key={m.label} className={`${styles.metricCard} ${styles[m.status]}`}>
           <div className={styles.metricHeader}>
             <span className={styles.metricLabel}>{m.label}</span>
@@ -48,7 +51,7 @@ function MetricsPanel() {
 }
 
 /* ── Logs Panel ── */
-function LogsPanel() {
+function LogsPanel({ logs }) {
   const levelStyle = {
     ERROR: styles.logError,
     WARN:  styles.logWarn,
@@ -89,7 +92,7 @@ function LogsPanel() {
 }
 
 /* ── Events Panel ── */
-function EventsPanel() {
+function EventsPanel({ events }) {
   const typeColor = { Warning: styles.eventWarning, Normal: styles.eventNormal };
 
   return (
@@ -116,7 +119,7 @@ function EventsPanel() {
 }
 
 /* ── Terminal Panel ── */
-function TerminalPanel() {
+function TerminalPanel({ terminalResponses }) {
   const [history, setHistory] = useState([
     { type: 'info', text: 'Incident Zero — Investigation Terminal' },
     { type: 'info', text: 'Context: production namespace  |  Try: kubectl get pods' },
@@ -308,6 +311,10 @@ export default function Investigation() {
   const [showIncidentModal, setShowIncidentModal] = useState(false);
   const [showAbandonModal, setShowAbandonModal] = useState(false);
   const [incident, setIncident] = useState(null);
+  const [logs, setLogs] = useState([]);
+  const [metrics, setMetrics] = useState([]);
+  const [events, setEvents] = useState([]);
+  const [terminalResponses, setTerminalResponses] = useState({});
 
   // Notes — persisted so tab switches don't lose content
   const [notes, setNotesState] = useState(
@@ -360,6 +367,37 @@ export default function Investigation() {
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!incident?.rawId) return;
+
+    const incidentId = incident.rawId;
+    const fetchLogs = fetch(`${API_BASE}/incidents/${incidentId}/logs`).then(r => r.json());
+    const fetchMetrics = fetch(`${API_BASE}/incidents/${incidentId}/metrics`).then(r => r.json());
+    const fetchEvents = fetch(`${API_BASE}/incidents/${incidentId}/events`).then(r => r.json());
+    const fetchTerminal = fetch(`${API_BASE}/incidents/${incidentId}/terminal`).then(r => r.json());
+
+    Promise.all([fetchLogs, fetchMetrics, fetchEvents, fetchTerminal])
+      .then(([logsData, metricsData, eventsData, terminalData]) => {
+        setLogs(Array.isArray(logsData) ? logsData : []);
+        setMetrics(Array.isArray(metricsData) ? metricsData : []);
+        setEvents(Array.isArray(eventsData) ? eventsData : []);
+        setTerminalResponses(
+          Array.isArray(terminalData)
+            ? terminalData.reduce((acc, row) => {
+                acc[row.command] = row.output;
+                return acc;
+              }, {})
+            : {}
+        );
+      })
+      .catch(() => {
+        setLogs([]);
+        setMetrics([]);
+        setEvents([]);
+        setTerminalResponses({});
+      });
+  }, [incident?.rawId]);
 
   useEffect(() => {
     function onKeyDown(e) {
@@ -504,10 +542,10 @@ export default function Investigation() {
           </div>
 
           <div className={styles.panelBody}>
-            {activeTab === 'metrics'  && <MetricsPanel />}
-            {activeTab === 'logs'     && <LogsPanel />}
-            {activeTab === 'events'   && <EventsPanel />}
-            {activeTab === 'terminal' && <TerminalPanel />}
+            {activeTab === 'metrics'  && <MetricsPanel metrics={metrics} />}
+            {activeTab === 'logs'     && <LogsPanel logs={logs} />}
+            {activeTab === 'events'   && <EventsPanel events={events} />}
+            {activeTab === 'terminal' && <TerminalPanel terminalResponses={terminalResponses} />}
             {activeTab === 'notes'    && <NotesPanel notes={notes} setNotes={setNotes} />}
             {activeTab === 'rca'      && <RCAPanel
               whatHappened={whatHappened}
