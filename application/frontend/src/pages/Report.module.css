@@ -55,7 +55,7 @@
 .topbarMeta {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
-  color: var(--text-dim);
+  color: var(--text-secondary);
   letter-spacing: 0.5px;
 }
 
