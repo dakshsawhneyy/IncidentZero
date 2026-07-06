@@ -125,7 +125,7 @@ jobs:
 
       - name: Add Azure host key
         run: |
-          ssh-keyscan -H ${{ steps.steps.vm.outputs.ip }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ steps.vm.outputs.ip }} >> ~/.ssh/known_hosts
 
       - name: Run Ansible Playbook
         working-directory: ansible/
