@@ -77,11 +77,11 @@ jobs:
 
       - name: Terraform Plan
         working-directory: infra/main_infra
-        run: terraform plan
+        run: terraform plan -var="admin_username=${{secrets.ADMIN_USERNAME}}"
 
       - name: Terraform Apply
         working-directory: infra/main_infra
-        run: terraform apply --auto-approve
+        run: terraform apply --auto-approve -var="admin_username=${{secrets.ADMIN_USERNAME}}"
 
       - name: Get VM IP
         id: vm
