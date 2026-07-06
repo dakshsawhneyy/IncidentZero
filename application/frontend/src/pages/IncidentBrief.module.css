@@ -564,7 +564,7 @@
 .ctaNote {
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
-  color: var(--text-dim);
+  color: var(--text-code);
   letter-spacing: 0.3px;
 }
 

@@ -326,7 +326,7 @@ export default function Landing() {
           <span className={styles.ctaCmd}> respond --incident INC-001 --severity P1</span>
         </div>
         <p className={styles.ctaNote}>one incident. no hints. just you and the signals.</p>
-        <button className={styles.btnRespond} onClick={() => navigate('/incident')}>
+        <button className={styles.btnRespond} onClick={() => navigate('/incidents')}>
           <span className={styles.btnRespondDot} />
           start investigation
         </button>
