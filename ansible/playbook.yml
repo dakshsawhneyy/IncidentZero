@@ -49,7 +49,9 @@
         src: .././application/docker-compose.yml
         dest: /opt/platform/docker-compose.yml
 
+
     # Create .env file
+    # env is in actions, ansible can't lookup so need to create .env file
     - name: Create .env file
       copy:
         dest: /opt/platform/.env
