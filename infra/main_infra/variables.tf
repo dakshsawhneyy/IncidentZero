@@ -16,9 +16,6 @@ variable "location" {
 variable "admin_username" {
   type = string
 }
-variable "admin_password" {
-  type = string
-}
 
 variable "vn_cidr" {
   default = ["10.0.0.0/16"]

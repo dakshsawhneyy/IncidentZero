@@ -24,11 +24,6 @@ variable "admin_username" {
   sensitive = true
 }
 
-variable "admin_password" {
-  type = string
-  sensitive = true
-}
-
 variable "env" {
   type = string
 }
