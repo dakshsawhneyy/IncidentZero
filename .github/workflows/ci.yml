@@ -119,6 +119,10 @@ jobs:
           ansible_ssh_common_args='-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
           EOF
 
+      - name: Print Inventory
+        run: |
+          cat ansible/inventory.ini
+
       - name: Run Ansible Playbook
         working-directory: ansible/
         run: |
