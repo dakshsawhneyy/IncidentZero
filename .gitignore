@@ -1,8 +1,10 @@
 node_modules
 venv
-.terraform
+.terraform*
 terraform.tfstate*
 .vscode
 .env
 *.secret*
 queries/
+terraform.tfvars
+inventory.ini
