@@ -1,5 +1,5 @@
 output "vm_public_ip" {
-  value       = module.vm.azurerm_public_ip.main.ip_address
+  value       = module.vm.vm_public_ip
   description = "The public IP address of the virtual machine"
 }
 
@@ -9,6 +9,6 @@ output "admin_username" {
 }
 
 output "tls_private_key" {
-  value     = module.vm.tls_private_key.vm_ssh.private_key_pem
+  value     = module.vm.tls_private_key
   sensitive = true
 }
