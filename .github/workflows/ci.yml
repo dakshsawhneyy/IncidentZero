@@ -123,6 +123,10 @@ jobs:
         run: |
           cat ansible/inventory.ini
 
+      - name: Add Azure host key
+        run: |
+          ssh-keyscan -H ${{ steps.steps.vm.outputs.ip }} >> ~/.ssh/known_hosts
+
       - name: Run Ansible Playbook
         working-directory: ansible/
         run: |
