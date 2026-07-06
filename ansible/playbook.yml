@@ -49,6 +49,18 @@
         src: .././application/docker-compose.yml
         dest: /opt/platform/docker-compose.yml
 
+    # Create .env file
+    - name: Create .env file
+      copy:
+        dest: /opt/platform/.env
+        mode: '0600'
+        content: |
+          DATABASE_URL={{ lookup('env', 'DATABASE_URL') }}
+          PORT=4000
+          NODE_ENV=development
+          DB_SSL=true
+          CORS_ORIGIN=http://localhost
+
     # -----------------------------
     # Pull Latest Images
     # -----------------------------
