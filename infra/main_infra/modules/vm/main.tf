@@ -45,7 +45,7 @@ resource "azurerm_network_security_group" "main" {
     destination_address_prefix = "*"
   }
   security_rule {
-    name                       = "Allow-SSH"
+    name                       = "Allow-HTTP"
     priority                   = 110
     direction                  = "Inbound"
     access                     = "Allow"
@@ -56,7 +56,7 @@ resource "azurerm_network_security_group" "main" {
     destination_address_prefix = "*"
   }
   security_rule {
-    name                       = "Allow-SSH"
+    name                       = "Allow-HTTPS"
     priority                   = 120
     direction                  = "Inbound"
     access                     = "Allow"
