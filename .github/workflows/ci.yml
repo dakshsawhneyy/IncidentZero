@@ -104,8 +104,8 @@ jobs:
       - name: Configure SSH Key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.AZURE_SSH_KEY }}" > ~/.ssh/azure_rsa.pem
-          chmod 600 ~/.ssh/azure_rsa.pem
+          echo "${{ secrets.AZURE_SSH_KEY }}" > ~/.ssh/azure_rsa
+          chmod 600 ~/.ssh/azure_rsa
 
       - name: Generate Inventory
         run: |
