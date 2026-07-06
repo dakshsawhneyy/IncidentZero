@@ -1,0 +1,80 @@
+- name: Configure Application Server
+  hosts: servers
+  become: true
+
+  tasks:
+
+    - name: Update Packages
+      apt:
+        update_cache: yes
+
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+
+    - name: Install Docker Compose Plugin
+      apt:
+        name: docker-compose-v2
+        state: present
+
+    - name: Start Docker Service
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Add ubuntu user to docker group
+      user:
+        name: ubuntu
+        groups: docker
+        append: yes
+
+    # -----------------------------
+    # Create Application Directory
+    # -----------------------------
+
+    - name: Create application directory
+      file:
+        path: /opt/platform
+        state: directory
+        mode: '0755'
+
+    # -----------------------------
+    # Copy Docker Compose File
+    # -----------------------------
+
+    - name: Copy docker-compose.yml
+      copy:
+        src: .././application/docker-compose.yml
+        dest: /opt/platform/docker-compose.yml
+
+    # -----------------------------
+    # Pull Latest Images
+    # -----------------------------
+
+    - name: Pull Docker Images
+      command: docker compose pull
+      args:
+        chdir: /opt/platform
+
+    # -----------------------------
+    # Run Containers
+    # -----------------------------
+
+    - name: Start Application Containers
+      command: docker compose up -d
+      args:
+        chdir: /opt/platform
+
+    # -----------------------------
+    # Verify Deployment
+    # -----------------------------
+
+    - name: Show Running Containers
+      command: docker ps
+      register: docker_output
+
+    - name: Display Running Containers
+      debug:
+        var: docker_output.stdout_lines
