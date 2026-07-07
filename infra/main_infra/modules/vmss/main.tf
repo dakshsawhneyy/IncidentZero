@@ -144,6 +144,8 @@ resource "azurerm_linux_virtual_machine_scale_set" "example" {
   tags = {
     environment = var.env
   }
+
+  depends_on = [ azurerm_lb_rule.http ]
 }
 
 
