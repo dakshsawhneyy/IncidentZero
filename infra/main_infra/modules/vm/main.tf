@@ -19,14 +19,6 @@ resource "azurerm_subnet" "internal" {
   address_prefixes     = var.subnet_cidr
 }
 
-# Public IP
-resource "azurerm_public_ip" "main" {
-  name                = "${var.prefix}-publicip"
-  location            = data.azurerm_resource_group.example.location
-  resource_group_name = data.azurerm_resource_group.example.name
-  allocation_method   = "Static" 
-}
-
 # Security Group
 resource "azurerm_network_security_group" "main" {
   name                = "${var.prefix}-nsg"
@@ -71,20 +63,6 @@ resource "azurerm_network_security_group" "main" {
 resource "azurerm_subnet_network_security_group_association" "main" {
   subnet_id                 = azurerm_subnet.internal.id
   network_security_group_id = azurerm_network_security_group.main.id
-}
-
-# Network Interface
-resource "azurerm_network_interface" "main" {
-  name                = "${var.prefix}-nic"
-  location            = data.azurerm_resource_group.example.location
-  resource_group_name = data.azurerm_resource_group.example.name
-
-  ip_configuration {
-    name                          = "testconfiguration1"
-    subnet_id                     = azurerm_subnet.internal.id
-    private_ip_address_allocation = "Dynamic"
-    public_ip_address_id = azurerm_public_ip.main.id
-  }
 }
 
 # Generate a key-pair
