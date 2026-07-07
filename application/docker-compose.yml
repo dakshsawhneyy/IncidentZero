@@ -5,6 +5,8 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
+    environment:
+      VITE_API_URL: ${VITE_API_URL}
     depends_on: 
       - backend
     networks:

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Incidents.module.css';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+const API_BASE = import.meta.env.VITE_API_URL || '';
 const SEVERITY_FILTERS = ['All', 'Critical', 'High', 'Medium', 'Low'];
 
 function normalizeSeverity(incident) {
