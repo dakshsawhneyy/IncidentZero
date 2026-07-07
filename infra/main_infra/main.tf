@@ -1,5 +1,5 @@
-module "vm" {
-  source         = "./modules/vm"
+module "vmss" {
+  source         = "./modules/vmss"
   rsg_name       = var.rsg_name
   prefix         = var.prefix
   location       = var.location
