@@ -1,5 +1,5 @@
 output "vmss_id" {
-  value       = azurerm_virtual_machine_scale_set.example.id
+  value       = azurerm_linux_virtual_machine_scale_set.example.id
   description = "The id of the VM Scale Set"
 }
 

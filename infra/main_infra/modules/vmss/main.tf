@@ -67,14 +67,24 @@ resource "azurerm_subnet_network_security_group_association" "main" {
 
 
 # virtual_machine_scale_set
-resource "azurerm_virtual_machine_scale_set" "example" {
+resource "azurerm_linux_virtual_machine_scale_set" "example" {
   name                = "${var.prefix}-vmss"
-  location            = data.azurerm_resource_group.example.location
   resource_group_name = data.azurerm_resource_group.example.name
+  location            = data.azurerm_resource_group.example.location
 
-  # automatic rolling upgrade
-  automatic_os_upgrade = true
-  upgrade_policy_mode  = "Rolling"
+  sku       = var.vm_size
+  instances = var.default_instances
+
+  admin_username = var.admin_username
+
+  upgrade_mode = "Rolling"
+
+  health_probe_id = azurerm_lb_probe.http.id
+
+  automatic_os_upgrade_policy {
+    enable_automatic_os_upgrade = true
+    disable_automatic_rollback = false
+  }
 
   rolling_upgrade_policy {
     max_batch_instance_percent              = 20
@@ -83,59 +93,51 @@ resource "azurerm_virtual_machine_scale_set" "example" {
     pause_time_between_batches              = "PT0S"
   }
 
-  # required when using rolling upgrade policy
-  health_probe_id = azurerm_lb_probe.http.id
+  custom_data = base64encode(
+    file("${path.module}/user-script.sh")
+  )
 
-  sku {
-    name     = var.vm_size
-    tier     = "Standard"
-    capacity = var.default_instances
+  admin_ssh_key {
+    username   = var.admin_username
+    public_key = file("${path.module}/../../azure_rsa.pub")
   }
 
-  storage_profile_image_reference {
+  source_image_reference {
     publisher = "Canonical"
     offer     = "0001-com-ubuntu-server-jammy"
     sku       = "22_04-lts"
     version   = "latest"
   }
 
-  storage_profile_os_disk {
-    name              = "${var.prefix}-osdisk"
-    caching           = "ReadWrite"
-    create_option     = "FromImage"
-    managed_disk_type = "Standard_LRS"
+  os_disk {
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
   }
 
-  storage_profile_data_disk {
-    lun           = 0
-    caching       = "ReadWrite"
-    create_option = "Empty"
-    disk_size_gb  = 10
+  data_disk {
+    lun                  = 0
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+    disk_size_gb         = 10
+    create_option        = "Empty"
   }
 
-  os_profile {
-    computer_name_prefix = "${var.prefix}-vm" 
-    admin_username = var.admin_username
-    custom_data = base64encode(file("${path.module}/user-script.sh"))
-  }
-  os_profile_linux_config {
-    disable_password_authentication = true
-    ssh_keys {
-      path = "/home/${var.admin_username}/.ssh/authorized_keys"
-      key_data = file("${path.module}/../../azure_rsa.pub")
-    }
-  }
-
-  network_profile {
-    name    = "${var.prefix}-network-profile"
+  network_interface {
+    name    = "${var.prefix}-nic"
     primary = true
 
     ip_configuration {
-      name                                   = "TestIPConfiguration"
-      primary                                = true
-      subnet_id                              = azurerm_subnet.internal.id
-      load_balancer_backend_address_pool_ids = [azurerm_lb_backend_address_pool.bpepool.id]
-      load_balancer_inbound_nat_rules_ids    = [azurerm_lb_nat_pool.lbnatpool.id]
+      name      = "internal"
+      primary   = true
+      subnet_id = azurerm_subnet.internal.id
+
+      load_balancer_backend_address_pool_ids = [
+        azurerm_lb_backend_address_pool.bpepool.id
+      ]
+
+      load_balancer_inbound_nat_rules_ids = [
+        azurerm_lb_nat_pool.lbnatpool.id
+      ]
     }
   }
 
@@ -151,7 +153,7 @@ resource "azurerm_monitor_autoscale_setting" "autoscale" {
   resource_group_name = data.azurerm_resource_group.example.name
   location            = data.azurerm_resource_group.example.location
 
-  target_resource_id = azurerm_virtual_machine_scale_set.example.id
+  target_resource_id = azurerm_linux_virtual_machine_scale_set.example.id
 
   profile {
     name = "default"
@@ -164,7 +166,7 @@ resource "azurerm_monitor_autoscale_setting" "autoscale" {
     rule {
       metric_trigger {
         metric_name        = "Percentage CPU"
-        metric_resource_id = azurerm_virtual_machine_scale_set.example.id
+        metric_resource_id = azurerm_linux_virtual_machine_scale_set.example.id
 
         operator  = "GreaterThan"
         statistic = "Average"  # it compares avg among all instances
