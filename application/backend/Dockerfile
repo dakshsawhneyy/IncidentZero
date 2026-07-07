@@ -13,10 +13,9 @@ FROM node:20-alpine
 WORKDIR /app
 
 # Copy only node_modules, server.js and app
-# COPY --from=builder /app/node_modules/ ./node_modules
-# COPY --from=builder /app/package*.json ./
-COPY --from=builder . .
-
+COPY --from=builder /app/node_modules/ ./node_modules
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/src/server.js server.js
 EXPOSE 8080
 
-CMD ["node", "src/server.js"]
+CMD ["node", "server.js"]
