@@ -7,7 +7,7 @@ dotenv.config();
 
 const { Pool } = pkg;
 const app = express();
-const PORT = process.env.PORT || 4001;
+const PORT = process.env.PORT || 4000;
 
 if (!process.env.DATABASE_URL) {
   console.warn('⚠️ DATABASE_URL is not set. The backend will start, but database requests will fail until it is configured.');
