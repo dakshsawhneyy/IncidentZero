@@ -7,8 +7,3 @@ output "admin_username" {
   value     = var.admin_username
   sensitive = true # Username is fine to show
 }
-
-output "tls_private_key" {
-  value     = module.vm.tls_private_key
-  sensitive = true
-}
