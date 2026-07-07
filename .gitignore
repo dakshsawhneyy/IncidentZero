@@ -8,4 +8,4 @@ terraform.tfstate*
 queries/
 terraform.tfvars
 inventory.ini
-azure_rsa*
+azure_rsa
