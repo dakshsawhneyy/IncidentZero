@@ -49,6 +49,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-push
 
+    permissions:
+      id-token: write
+      contents: read
+
     steps:
 
       - name: Code Checkout
