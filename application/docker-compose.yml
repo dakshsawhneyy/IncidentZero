@@ -1,4 +1,3 @@
-version: '3.9'
 services:
   frontend:
     image: dakshsawhneyy/incidentzero-frontend:v1
@@ -7,9 +6,9 @@ services:
     ports:
       - "80:80"
     depends_on: 
-      - incidentzero
+      - backend
     networks:
-      - capstone
+      - incidentzero
   backend:
     image: dakshsawhneyy/incidentzero-backend:v1
     container_name: backend
