@@ -19,4 +19,4 @@ COPY --from=builder . .
 
 EXPOSE 8080
 
-CMD ["node", "server.js"]
+CMD ["node", "src/server.js"]
