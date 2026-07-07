@@ -44,17 +44,18 @@ resource "azurerm_lb_nat_pool" "lbnatpool" {
   frontend_port_start = 50000
   frontend_port_end   = 50119
   backend_port        = 22    # All those frontend ports map to SSH.
-  frontend_ip_configuration_name = azurerm_lb.main.frontend_ip_configuration[0].name
+  frontend_ip_configuration_name = "PublicIPAddress"
 }
 
 # This is the rule that actually forwards traffic.
 resource "azurerm_lb_rule" "http" {
   name                           = "http-rule"
   loadbalancer_id                = azurerm_lb.main.id
-  frontend_ip_configuration_name = azurerm_lb.main.frontend_ip_configuration[0].name
+  frontend_ip_configuration_name = "PublicIPAddress"
   protocol                       = "Tcp"
   frontend_port                  = 80
   backend_port                   = 80
+  backend_address_pool_ids = [ azurerm_lb_backend_address_pool.bpepool.id ]
   probe_id                       = azurerm_lb_probe.http.id
   idle_timeout_in_minutes        = 4
 }
