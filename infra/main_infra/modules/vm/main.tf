@@ -87,18 +87,8 @@ resource "azurerm_network_interface" "main" {
   }
 }
 
-# Generate the private/public key pair
-resource "tls_private_key" "vm_ssh" {
-  algorithm = "RSA"
-  rsa_bits  = 4096
-}
-
-# Save the private key in local
-resource "local_file" "private_key" {
-  filename        = "azure_rsa"
-  file_permission = "0600"
-  content         = tls_private_key.vm_ssh.private_key_pem
-}
+# Generate a key-pair
+# ssh-keygen -t ed25519 -f azure_rsa
 
 # Virtual Machine
 resource "azurerm_virtual_machine" "main" {
@@ -134,7 +124,7 @@ resource "azurerm_virtual_machine" "main" {
     disable_password_authentication = true
     ssh_keys {
       path = "/home/${var.admin_username}/.ssh/authorized_keys"
-      key_data = tls_private_key.vm_ssh.public_key_openssh
+      key_data = file("/home/dakshsawhneyy/.ssh/azure_rsa.pub")
     }
   }
   tags = {
