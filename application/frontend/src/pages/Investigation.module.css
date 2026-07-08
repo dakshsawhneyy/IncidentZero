@@ -745,7 +745,7 @@
   text-shadow: 0 0 8px rgba(0,255,136,0.15);
 }
 
-.notesArea::placeholder { color: var(--text-dim); text-shadow: none; }
+.notesArea::placeholder { color: var(--text-secondary); text-shadow: none; }
 .notesArea:focus { border-color: var(--border-mid); }
 
 /* ── RCA ── */
