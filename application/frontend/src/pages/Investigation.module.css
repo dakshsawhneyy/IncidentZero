@@ -813,7 +813,7 @@
 }
 
 .rcaTextarea:focus { border-color: rgba(45,143,255,0.4); box-shadow: 0 0 0 1px rgba(45,143,255,0.1); }
-.rcaTextarea::placeholder { color: var(--text-dim); }
+.rcaTextarea::placeholder { color: var(--text-secondary); }
 
 .rcaError {
   font-family: 'JetBrains Mono', monospace;
