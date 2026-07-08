@@ -154,7 +154,7 @@ export default function Landing() {
             <span className={styles.navStatusDot} />
             {incidentCount} active incident{incidentCount === 1 ? '' : 's'}
           </span>
-          <span className={styles.navBeta}>v0.1 BETA</span>
+          <span className={styles.navBeta}>v1.0 BETA</span>
         </div>
       </nav>
 
@@ -334,8 +334,8 @@ export default function Landing() {
 
       {/* ── Footer ── */}
       <footer className={styles.footer}>
-        <span className={styles.footerLeft}>incident-zero · v0.1.0</span>
-        <span className={styles.footerMid}>built for engineers who think under pressure</span>
+        <span className={styles.footerLeft}>incident-zero · v1.0.0</span>
+        <span className={styles.footerMid}>Built for SREs, by an SRE.</span>
         <span className={styles.footerRight}>© 2026</span>
       </footer>
     </div>
