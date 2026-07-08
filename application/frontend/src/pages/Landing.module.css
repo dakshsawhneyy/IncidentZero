@@ -1309,6 +1309,7 @@
     grid-template-columns: 1fr;
     padding: 12px 14px;
     gap: 8px;
+    align-items: start;
   }
 
   .compareLab,
@@ -1320,10 +1321,18 @@
     background: transparent;
   }
 
+  .compareLab,
+  .compareUs {
+    width: 100%;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
   .compareArrow {
     padding: 2px 0;
     text-align: left;
     color: var(--cyan);
+    font-size: 12px;
   }
 
   .compareUs {
@@ -1334,6 +1343,7 @@
     border-left: none;
     padding-left: 0;
     padding-top: 8px;
+    line-height: 1.6;
   }
 
   .scoreCardHeader {

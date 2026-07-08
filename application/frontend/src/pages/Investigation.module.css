@@ -1259,6 +1259,8 @@
 @media (max-width: 768px) {
   .topbar {
     justify-content: center;
+    padding: 8px 12px;
+    gap: 8px;
   }
 
   .topbarLeft,
@@ -1282,6 +1284,26 @@
 
   .panelBody {
     padding: 14px;
+  }
+
+  .terminal {
+    min-height: 320px;
+  }
+
+  .terminalOutput {
+    padding: 12px 12px 14px;
+  }
+
+  .termPre {
+    font-size: 11px;
+  }
+
+  .terminalInput {
+    padding: 8px 10px;
+  }
+
+  .termInputField {
+    font-size: 11px;
   }
 
   .metricsGrid {
