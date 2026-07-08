@@ -34,9 +34,12 @@ else
 fi
 
 # Export runtime env (used by the compose file)
+# Terraform injects the value here before the VM boots.
 export VITE_API_URL=""
-export DATABASE_URL="$DATABASE_URL"
-if [ -z "$${DATABASE_URL:-}" ]; then
+export DATABASE_URL="${DATABASE_URL}"
+if [ -n "$DATABASE_URL" ]; then
+	echo "DATABASE_URL was provided to the VM startup script (length: $${#DATABASE_URL})."
+else
 	echo "WARNING: DATABASE_URL is not set. The backend will start, but /incidents will return 500 until the Azure PostgreSQL connection string is provided." >&2
 fi
 
