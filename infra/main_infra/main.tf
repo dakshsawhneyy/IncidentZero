@@ -7,4 +7,5 @@ module "vmss" {
   vn_cidr        = var.vn_cidr
   subnet_cidr    = var.subnet_cidr
   env            = var.env
+  DATABASE_URL = var.DATABASE_URL
 }

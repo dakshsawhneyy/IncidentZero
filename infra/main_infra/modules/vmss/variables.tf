@@ -47,3 +47,8 @@ variable "default_instances" {
   type    = number
   default = 2
 }
+
+variable "DATABASE_URL" {
+  type = string
+  sensitive = true
+}

@@ -36,3 +36,8 @@ variable "storage_account_name" {
   type    = string
   default = "incidentzerostatefile"
 }
+
+variable "DATABASE_URL" {
+  type = string
+  sensitive = true
+}

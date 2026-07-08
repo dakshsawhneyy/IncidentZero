@@ -93,8 +93,10 @@ resource "azurerm_linux_virtual_machine_scale_set" "example" {
     pause_time_between_batches              = "PT0S"
   }
 
-  custom_data = base64encode(
-    file("${path.module}/user-script.sh")
+  custom_data = base64encode(templatefile(
+    "${path.module}/user-script.sh", {
+      DATABASE_URL = var.DATABASE_URL
+    })
   )
 
   admin_ssh_key {
