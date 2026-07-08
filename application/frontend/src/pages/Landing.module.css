@@ -929,7 +929,7 @@
 .previewNote {
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   letter-spacing: 0.3px;
   padding-left: 2px;
 }
@@ -999,7 +999,7 @@
 .compareCaption {
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   letter-spacing: 0.3px;
   border-left: 2px solid var(--border-mid);
   padding-left: 14px;
@@ -1188,7 +1188,7 @@
   z-index: 1;
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   letter-spacing: 0.5px;
 }
 
