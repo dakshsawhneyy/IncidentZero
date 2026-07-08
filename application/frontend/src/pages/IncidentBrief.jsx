@@ -65,7 +65,14 @@ export default function IncidentBrief() {
   }
 
   const incidentCount = incidents.length;
-  const visibleIncidents = incidents.slice(0, 3);
+  const currentSeverity = (incidentMeta?.severityLabel || incidentMeta?.severity || '').toString().trim().toLowerCase();
+  const relatedIncidents = incidents
+    .filter((item) => {
+      const itemSeverity = (item.severityLabel || item.severity || '').toString().trim().toLowerCase();
+      return currentSeverity ? itemSeverity === currentSeverity : true;
+    })
+    .filter((item) => item.rawId !== incident?.rawId);
+  const visibleIncidents = relatedIncidents.slice(0, 3);
 
   return (
     <div className={styles.page}>
