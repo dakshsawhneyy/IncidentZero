@@ -96,6 +96,12 @@
   margin-bottom: 24px;
 }
 
+@media (max-width: 1024px) {
+  .incidentShelf {
+    display: none;
+  }
+}
+
 .incidentShelfItem {
   display: flex;
   flex-direction: column;

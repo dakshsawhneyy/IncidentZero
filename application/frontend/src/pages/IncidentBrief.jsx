@@ -65,6 +65,7 @@ export default function IncidentBrief() {
   }
 
   const incidentCount = incidents.length;
+  const visibleIncidents = incidents.slice(0, 3);
 
   return (
     <div className={styles.page}>
@@ -86,7 +87,7 @@ export default function IncidentBrief() {
       <div className={`${styles.main} ${revealed ? styles.visible : ''}`}>
         {incidentCount > 1 && (
           <div className={styles.incidentShelf}>
-            {incidents.map((item) => (
+            {visibleIncidents.map((item) => (
               <button
                 key={item.rawId}
                 className={`${styles.incidentShelfItem} ${incident?.rawId === item.rawId ? styles.incidentShelfActive : ''}`}
