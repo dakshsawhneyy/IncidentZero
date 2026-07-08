@@ -77,8 +77,8 @@ jobs:
 
       - name: Terraform Plan
         working-directory: infra/main_infra
-        run: terraform plan -var="admin_username=${{secrets.ADMIN_USERNAME}}"
+        run: terraform plan -var="admin_username=${{secrets.ADMIN_USERNAME}}" -var="DATABASE_URL=${{secrets.DATABASE_URL}}"
 
       - name: Terraform Apply
         working-directory: infra/main_infra
-        run: terraform apply --auto-approve -var="admin_username=${{secrets.ADMIN_USERNAME}}"
+        run: terraform apply --auto-approve -var="admin_username=${{secrets.ADMIN_USERNAME}}" -var="DATABASE_URL=${{secrets.DATABASE_URL}}"
