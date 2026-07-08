@@ -40,3 +40,37 @@ One downstream dependency suddenly has 800ms response time.
 
 Now investigate.
 ```
+
+------------------------------------
+
+Incident 2
+CrashLoopBackOff
+
+Teaches:
+Events
+Pod logs
+Kubernetes debugging
+
+Incident 3
+OOMKilled
+
+Teaches:
+Memory limits
+Resource requests
+JVM/Node memory
+
+Incident 4
+DNS Failure
+
+Teaches:
+Service discovery
+Networking
+kube-dns/CoreDNS
+
+Incident 5
+Database Connection Pool Exhaustion
+
+Teaches:
+Database bottlenecks
+Connection pools
+Application vs infrastructure diagnosis

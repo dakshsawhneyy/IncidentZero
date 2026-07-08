@@ -156,7 +156,7 @@ function TerminalPanel({ terminalResponses }) {
     } else if (trimmed === 'help') {
       newHistory.push({
         type: 'output',
-        text: `Available commands:\n  kubectl get pods\n  kubectl get pods -n production\n  kubectl logs <pod-name>\n  kubectl logs redis-cache-0\n  kubectl describe pod redis-cache-0\n  kubectl top pods\n  kubectl get events\n  kubectl get svc\n  kubectl get hpa\n  kubectl rollout history deployment/checkout-api\n  clear`
+        text: `Available commands:\n  kubectl get pods\n kubectl logs pod checkout-api\n kubectl logs pod redis-cache-0\n  kubectl describe pod redis-cache-0\n kubectl top pods\n  kubectl get events\n  kubectl get svc\n  kubectl get hpa\n  kubectl rollout history deployment/checkout-api\n  clear`
       });
     } else {
       newHistory.push({ type: 'error', text: `command not found: ${trimmed}\nType 'help' for available commands.` });
