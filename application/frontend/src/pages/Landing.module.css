@@ -1307,22 +1307,33 @@
 
   .compareRow {
     grid-template-columns: 1fr;
+    padding: 12px 14px;
+    gap: 8px;
   }
 
   .compareLab,
   .compareArrow,
   .compareUs {
     border-right: none;
-    border-bottom: 1px solid var(--border);
+    border-bottom: none;
+    padding: 0;
+    background: transparent;
   }
 
   .compareArrow {
-    padding: 4px 22px 10px;
+    padding: 2px 0;
     text-align: left;
+    color: var(--cyan);
   }
 
   .compareUs {
     border-bottom: none;
+  }
+
+  .compareCaption {
+    border-left: none;
+    padding-left: 0;
+    padding-top: 8px;
   }
 
   .scoreCardHeader {

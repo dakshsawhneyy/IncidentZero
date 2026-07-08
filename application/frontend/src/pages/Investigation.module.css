@@ -672,7 +672,7 @@
   margin: 0;
 }
 
-.term_info .termPre   { color: var(--text-dim); }
+.term_info .termPre   { color: var(--text-secondary); }
 .term_cmd            { display: flex; align-items: baseline; }
 .term_cmd .termPre   { color: var(--text-primary); }
 .term_output .termPre { color: #3dff9a; text-shadow: 0 0 8px rgba(0,255,136,0.2); }
