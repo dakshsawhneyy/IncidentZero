@@ -123,7 +123,7 @@ function TerminalPanel({ terminalResponses }) {
   const [history, setHistory] = useState([
     { type: 'info', text: 'Incident Zero — Investigation Terminal' },
     { type: 'info', text: 'Context: production namespace  |  Try: kubectl get pods' },
-    { type: 'info', text: '─'.repeat(58) },
+    { type: 'info', text: '─'.repeat(50) },
   ]);
   const [input, setInput] = useState('');
   const [cmdHistory, setCmdHistory] = useState([]);

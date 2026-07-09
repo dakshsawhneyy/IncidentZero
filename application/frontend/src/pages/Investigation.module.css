@@ -672,7 +672,7 @@
   margin: 0;
 }
 
-.term_info .termPre   { color: var(--text-secondary); }
+.term_info .termPre   { color: var(--text-dim); }
 .term_cmd            { display: flex; align-items: baseline; }
 .term_cmd .termPre   { color: var(--text-primary); }
 .term_output .termPre { color: #3dff9a; text-shadow: 0 0 8px rgba(0,255,136,0.2); }
@@ -745,7 +745,7 @@
   text-shadow: 0 0 8px rgba(0,255,136,0.15);
 }
 
-.notesArea::placeholder { color: var(--text-secondary); text-shadow: none; }
+.notesArea::placeholder { color: var(--text-dim); text-shadow: none; }
 .notesArea:focus { border-color: var(--border-mid); }
 
 /* ── RCA ── */
@@ -813,7 +813,7 @@
 }
 
 .rcaTextarea:focus { border-color: rgba(45,143,255,0.4); box-shadow: 0 0 0 1px rgba(45,143,255,0.1); }
-.rcaTextarea::placeholder { color: var(--text-secondary); }
+.rcaTextarea::placeholder { color: var(--text-dim); }
 
 .rcaError {
   font-family: 'JetBrains Mono', monospace;
