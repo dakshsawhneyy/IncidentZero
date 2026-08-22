@@ -119,12 +119,7 @@ function EventsPanel({ events }) {
 }
 
 /* ── Terminal Panel ── */
-function TerminalPanel({ terminalResponses }) {
-  const [history, setHistory] = useState([
-    { type: 'info', text: 'Incident Zero — Investigation Terminal' },
-    { type: 'info', text: 'Context: production namespace  |  Try: kubectl get pods' },
-    { type: 'info', text: '─'.repeat(50) },
-  ]);
+function TerminalPanel({ terminalResponses, history, setHistory }) {
   const [input, setInput] = useState('');
   const [cmdHistory, setCmdHistory] = useState([]);
   const [histIdx, setHistIdx] = useState(-1);
@@ -156,7 +151,7 @@ function TerminalPanel({ terminalResponses }) {
     } else if (trimmed === 'help') {
       newHistory.push({
         type: 'output',
-        text: `Available commands:\n  kubectl get pods\n kubectl logs pod checkout-api\n kubectl logs pod redis-cache-0\n  kubectl describe pod redis-cache-0\n kubectl top pods\n  kubectl get events\n  kubectl get svc\n  kubectl get hpa\n  kubectl rollout history deployment/checkout-api\n  clear`
+        text: `Available commands:\n  kubectl get pods\n  kubectl logs pod checkout-api\n  kubectl logs pod redis-cache-0\n  kubectl describe pod redis-cache-0\n  kubectl top pods\n  kubectl get events\n  kubectl get svc\n  kubectl get hpa\n  kubectl rollout history deployment/checkout-api\n  clear`
       });
     } else {
       newHistory.push({ type: 'error', text: `command not found: ${trimmed}\nType 'help' for available commands.` });
@@ -311,6 +306,13 @@ export default function Investigation() {
   const [tabVisits, setTabVisits] = useState({ metrics: 1 });
   const [showIncidentModal, setShowIncidentModal] = useState(false);
   const [showAbandonModal, setShowAbandonModal] = useState(false);
+
+  // Terminal history lives in parent so tab switches don't reset it
+  const [terminalHistory, setTerminalHistory] = useState([
+    { type: 'info', text: 'Incident Zero — Investigation Terminal' },
+    { type: 'info', text: 'Context: production namespace  |  Try: kubectl get pods' },
+    { type: 'info', text: '─'.repeat(50) },
+  ]);
   const [incidents, setIncidents] = useState([]);
   const [selectedIncidentId, setSelectedIncidentId] = useState(() => {
     const stored = Number(sessionStorage.getItem('selectedIncidentId'));
@@ -555,7 +557,7 @@ export default function Investigation() {
             {activeTab === 'metrics'  && <MetricsPanel metrics={metrics} />}
             {activeTab === 'logs'     && <LogsPanel logs={logs} />}
             {activeTab === 'events'   && <EventsPanel events={events} />}
-            {activeTab === 'terminal' && <TerminalPanel terminalResponses={terminalResponses} />}
+            {activeTab === 'terminal' && <TerminalPanel terminalResponses={terminalResponses} history={terminalHistory} setHistory={setTerminalHistory} />}
             {activeTab === 'notes'    && <NotesPanel notes={notes} setNotes={setNotes} />}
             {activeTab === 'rca'      && <RCAPanel
               whatHappened={whatHappened}

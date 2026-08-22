@@ -163,13 +163,6 @@ const COMPARE = [
   { them: 'Complete a guided exercise',   us: 'No instructions. Just evidence.' },
 ];
 
-const SCORE_LINES = [
-  { ok: true,  text: 'Identified Redis as root dependency'  },
-  { ok: true,  text: 'Checked kubectl top pods first'       },
-  { ok: false, text: 'Never opened Kubernetes Events'       },
-  { ok: false, text: 'Restarted pod before finding cause'   },
-];
-
 const KUBECTL_OUTPUT = `$ kubectl top pods -n production
 NAME                          CPU     MEMORY
 checkout-api-7d9f8c-xk2pl     42m     180Mi
@@ -293,16 +286,28 @@ export default function Landing() {
 
       {/* ── Preview ── */}
       <section className={styles.section}>
-        <div className={styles.sectionHead}>
-          <p className={styles.eyebrow}>What you'll actually do</p>
-          <h2 className={styles.sectionTitle}>No walkthroughs. No hints. Just signals and a timer.</h2>
-        </div>
-        <div className={styles.twoTerminals}>
-          <CodeBlock label="kubectl top pods"            content={KUBECTL_OUTPUT} accent="var(--green-soft)" />
-          <CodeBlock label="kubectl logs checkout-api"   content={LOG_OUTPUT}     accent="var(--text-code)" />
+        <div className={styles.previewLayout}>
+          <div className={styles.previewCopy}>
+            <p className={styles.eyebrow}>What you'll actually do</p>
+            <h2 className={styles.sectionTitle}>No walkthroughs.<br />No hints.<br />Just signals.</h2>
+            <p className={styles.previewDesc}>
+              You get the same tools a real SRE has — metrics, logs, events, and a terminal.
+              No guided steps. No answer key. Figure it out before the timer runs out.
+            </p>
+            <div className={styles.previewPills}>
+              <span className={styles.previewPill} style={{ color: 'var(--red-soft)', background: 'var(--red-dim)', borderColor: 'var(--red-border)' }}>Metrics</span>
+              <span className={styles.previewPill} style={{ color: 'var(--blue-soft)', background: 'var(--blue-dim)', borderColor: 'var(--blue-border)' }}>Logs</span>
+              <span className={styles.previewPill} style={{ color: 'var(--yellow)', background: 'var(--yellow-dim)', borderColor: 'var(--yellow-border)' }}>K8s Events</span>
+              <span className={styles.previewPill} style={{ color: 'var(--green-soft)', background: 'var(--green-dim)', borderColor: 'var(--green-border)' }}>Terminal</span>
+            </div>
+          </div>
+          <div className={styles.previewTerminals}>
+            <CodeBlock label="kubectl top pods" content={KUBECTL_OUTPUT} accent="var(--green-soft)" />
+            <CodeBlock label="kubectl logs checkout-api" content={LOG_OUTPUT} accent="var(--text-code)" />
+          </div>
         </div>
         <p className={styles.previewNote}>
-          This is what you see. What you do next is up to you.
+          ↑ This is what you see. What you do next is up to you.
         </p>
       </section>
 
@@ -310,9 +315,13 @@ export default function Landing() {
 
       {/* ── Compare ── */}
       <section className={styles.section}>
+        <div className={styles.compareHeader}>
+          <p className={styles.eyebrow}>Why it's different</p>
+          <h2 className={styles.sectionTitle}>Other platforms teach configuration.<br />We teach diagnosis.</h2>
+        </div>
         <div className={styles.compareTable}>
           <div className={styles.compareHead}>
-            <span className={styles.compareColLabel}>Other platforms</span>
+            <span className={styles.compareColLabel} style={{ color: 'var(--text-muted)' }}>Other platforms</span>
             <span />
             <span className={styles.compareColLabel} style={{ color: 'var(--amber-soft)' }}>Incident Zero</span>
           </div>
@@ -330,42 +339,78 @@ export default function Landing() {
             </div>
           ))}
         </div>
-        <p className={styles.compareFoot}>
-          Other platforms teach you how to configure systems.
-          We teach you how to save them.
-        </p>
       </section>
 
       <Divider label="scoring" />
 
       {/* ── Scoring ── */}
-      <section className={styles.section}>
-        <div className={styles.scoringLayout}>
+      <section className={styles.scoringSection}>
+        <div className={styles.scoringInner}>
+          {/* Left copy */}
           <div className={styles.scoringCopy}>
             <p className={styles.eyebrow}>After every incident</p>
-            <h2 className={styles.sectionTitle}>Your investigation gets graded.</h2>
+            <h2 className={styles.sectionTitle}>Your investigation gets graded — honestly.</h2>
             <p className={styles.scoringBody}>
-              Not just whether you found the root cause — how you investigated.
-              What you checked, what you skipped, and whether your thinking matches
-              how a senior SRE approaches a P1.
+              Not just whether you found the root cause. How you investigated.
+              What you checked, what you skipped, and whether your thinking
+              matches how a senior SRE approaches a P1.
             </p>
+            <div className={styles.scoringBreakdown}>
+              {[
+                { label: 'RCA quality',        pts: '65 pts', desc: 'Did your analysis identify the real root cause and chain of events?' },
+                { label: 'Investigation depth', pts: '35 pts', desc: 'Did you use all available tools — metrics, logs, events, terminal?' },
+              ].map(b => (
+                <div key={b.label} className={styles.scoringBreakdownItem}>
+                  <div className={styles.scoringBreakdownTop}>
+                    <span className={styles.scoringBreakdownLabel}>{b.label}</span>
+                    <span className={styles.scoringBreakdownPts}>{b.pts}</span>
+                  </div>
+                  <p className={styles.scoringBreakdownDesc}>{b.desc}</p>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className={styles.scoreCard}>
-            <div className={styles.scoreCardTop}>
-              <span className={styles.scoreCardId}>INC-001 · POST-INCIDENT</span>
-              <span className={styles.scoreNum}>72<span className={styles.scoreMax}>/100</span></span>
-            </div>
-            {SCORE_LINES.map((l, i) => (
-              <div key={i} className={`${styles.scoreLine} ${l.ok ? styles.scoreOk : styles.scoreFail}`}>
-                <span className={styles.scoreLineMark}>{l.ok ? '✓' : '✗'}</span>
-                {l.text}
+          {/* Right — two example cards */}
+          <div className={styles.scoringCards}>
+            {/* Bad example */}
+            <div className={`${styles.scoreExCard} ${styles.scoreExCardBad}`}>
+              <div className={styles.scoreExHeader}>
+                <span className={styles.scoreExId}>INC-001</span>
+                <span className={styles.scoreExScore} style={{ color: 'var(--red-soft)' }}>34<span className={styles.scoreExMax}>/100</span></span>
               </div>
-            ))}
-            <div className={styles.scoreLesson}>
-              <span className={styles.scoreLessonTag}>LESSON</span>
-              Redis latency spiked before the circuit breaker opened.
-              Check dependency metrics first.
+              <div className={styles.scoreExBar}>
+                <div className={styles.scoreExBarFill} style={{ width: '34%', background: 'var(--red)' }} />
+              </div>
+              <div className={styles.scoreExGrade} style={{ color: 'var(--red-soft)', borderColor: 'var(--red-border)', background: 'var(--red-dim)' }}>Keep Practicing</div>
+              <div className={styles.scoreExItems}>
+                <div className={`${styles.scoreExItem} ${styles.scoreExFail}`}><span>✗</span>Restarted pod before diagnosing</div>
+                <div className={`${styles.scoreExItem} ${styles.scoreExFail}`}><span>✗</span>Never checked Redis metrics</div>
+                <div className={`${styles.scoreExItem} ${styles.scoreExFail}`}><span>✗</span>Skipped Kubernetes Events</div>
+                <div className={`${styles.scoreExItem} ${styles.scoreExFail}`}><span>✗</span>Skipped terminal entirely</div>
+              </div>
+            </div>
+
+            {/* Good example */}
+            <div className={`${styles.scoreExCard} ${styles.scoreExCardGood}`}>
+              <div className={styles.scoreExHeader}>
+                <span className={styles.scoreExId}>INC-001</span>
+                <span className={styles.scoreExScore} style={{ color: 'var(--green-soft)' }}>91<span className={styles.scoreExMax}>/100</span></span>
+              </div>
+              <div className={styles.scoreExBar}>
+                <div className={styles.scoreExBarFill} style={{ width: '91%', background: 'var(--green)' }} />
+              </div>
+              <div className={styles.scoreExGrade} style={{ color: 'var(--green-soft)', borderColor: 'var(--green-border)', background: 'var(--green-dim)' }}>Outstanding</div>
+              <div className={styles.scoreExItems}>
+                <div className={`${styles.scoreExItem} ${styles.scoreExOk}`}><span>✓</span>Identified Redis memory exhaustion</div>
+                <div className={`${styles.scoreExItem} ${styles.scoreExOk}`}><span>✓</span>Spotted latency spike in metrics first</div>
+                <div className={`${styles.scoreExItem} ${styles.scoreExOk}`}><span>✓</span>Confirmed via kubectl describe</div>
+                <div className={`${styles.scoreExItem} ${styles.scoreExOk}`}><span>✓</span>Described cascading failure chain</div>
+              </div>
+              <div className={styles.scoreExLesson}>
+                <span className={styles.scoreExLessonTag}>LESSON</span>
+                Redis latency spiked before the circuit breaker opened. Check dependency metrics first.
+              </div>
             </div>
           </div>
         </div>

@@ -20,6 +20,9 @@ const API_BASE = import.meta.env.VITE_API_URL || '';
    dynamically — no more hardcoded strings divorced from the data.
 ───────────────────────────────────────────────────────────── */
 
+/* The 5 investigable tools (excludes rca which is not an investigation tool) */
+const INVESTIGATION_TOOLS = ['metrics', 'logs', 'events', 'terminal', 'notes'];
+
 /* Extract the tool id from a path string like "Check Metrics (…)" */
 function pathToTabId(pathStr) {
   const lower = (pathStr || '').toLowerCase();
@@ -32,57 +35,44 @@ function pathToTabId(pathStr) {
 }
 
 /*
-  Build scoring rubric from DB keyClues.
+  RCA scoring rubric — built from DB keyClues.
 
-  Each clue maps to one or more keywords that a good RCA would contain.
-  Points are distributed so max possible = 80 (leaving 20 for investigation breadth).
+  Scoring philosophy:
+  - Max RCA text score = 65 pts (not 80). Remaining 35 pts come from investigation breadth.
+  - This ensures you CANNOT get a great score just by writing the right words —
+    you actually have to use the tools.
+  - Points per clue are intentionally unequal: primary cause > mechanism > chain > tools.
 */
 function buildRubricFromClues(keyClues) {
-  if (!Array.isArray(keyClues) || keyClues.length === 0) {
-    // fallback generic rubric
-    return [
-      { terms: ['redis', 'cache'],                              points: 25, hint: 'Identified the affected component' },
-      { terms: ['memory', 'oom', 'maxmemory', 'evict'],        points: 20, hint: 'Identified the root cause mechanism' },
-      { terms: ['circuit breaker', 'circuit', 'fallback'],     points: 15, hint: 'Mentioned cascading failure behavior' },
-      { terms: ['connection', 'pool', 'timeout'],               points: 10, hint: 'Recognized connection exhaustion' },
-      { terms: ['cascade', 'cascading', 'dependency'],         points: 10, hint: 'Understood the cascading pattern' },
-    ];
-  }
-
-  // Build term groups from clue text — split into individual keywords
-  const clueKeywords = keyClues.map(clue => {
-    const lower = clue.toLowerCase();
-    const terms = [];
-    // Extract quoted or parenthesised key phrases
-    // Redis signals
-    if (lower.includes('redis'))                       terms.push('redis', 'cache');
-    if (lower.includes('memory') || lower.includes('oom')) terms.push('memory', 'oom', 'maxmemory', 'evict');
-    if (lower.includes('circuit'))                     terms.push('circuit breaker', 'circuit', 'fallback');
-    if (lower.includes('connection') || lower.includes('pool')) terms.push('connection', 'pool', 'maxclients', 'timeout');
-    if (lower.includes('cascade') || lower.includes('latency')) terms.push('cascade', 'cascading', 'dependency', 'upstream', 'latency');
-    if (lower.includes('kubectl') || lower.includes('top pods')) terms.push('kubectl', 'top pods', 'describe');
-    return terms.filter(t => t.length);
-  }).filter(t => t.length);
-
-  // Deduplicate and assign points proportionally across up to 5 groups
-  const seen = new Set();
-  const groups = [];
-  for (const terms of clueKeywords) {
-    const key = terms[0];
-    if (!seen.has(key)) {
-      seen.add(key);
-      groups.push(terms);
-    }
-    if (groups.length >= 5) break;
-  }
-
-  const total = 80;
-  const perGroup = Math.floor(total / groups.length);
-  return groups.map((terms, i) => ({
-    terms,
-    points: i < groups.length - 1 ? perGroup : total - perGroup * (groups.length - 1),
-    hint: `Mentioned a key contributing factor (+${i < groups.length - 1 ? perGroup : total - perGroup * (groups.length - 1)})`,
-  }));
+  // Fixed rubric for the checkout-latency incident (derived from DB clues)
+  // Each group: terms to match, max pts, label for feedback
+  return [
+    {
+      terms: ['redis', 'cache'],
+      points: 20,
+      label: 'Identified Redis as the failing dependency',
+    },
+    {
+      terms: ['memory', 'oom', 'maxmemory', 'evict', 'limit'],
+      points: 18,
+      label: 'Identified memory exhaustion as the root mechanism',
+    },
+    {
+      terms: ['circuit breaker', 'circuit', 'fallback', 'open'],
+      points: 12,
+      label: 'Described the circuit breaker cascading to the API',
+    },
+    {
+      terms: ['connection', 'pool', 'maxclients', 'timeout', 'exhausted'],
+      points: 10,
+      label: 'Noted connection pool exhaustion',
+    },
+    {
+      terms: ['cascade', 'cascading', 'dependency', 'upstream', 'latency spike'],
+      points: 5,
+      label: 'Understood the cascading failure pattern',
+    },
+  ];
 }
 
 function scoreRCA(rcaText, keyClues) {
@@ -96,13 +86,13 @@ function scoreRCA(rcaText, keyClues) {
   for (const kt of rubric) {
     if (kt.terms.some(t => text.includes(t))) {
       score += kt.points;
-      hits.push({ type: 'positive', text: kt.hint });
+      hits.push({ type: 'positive', text: `${kt.label} (+${kt.points})` });
     } else {
-      misses.push({ type: 'negative', text: `Missed: ${kt.hint.replace('Mentioned a key contributing factor', 'a key factor was not mentioned')}` });
+      misses.push({ type: 'negative', text: `Missed: ${kt.label}` });
     }
   }
 
-  // Contextual penalty — jumping to fixes before diagnosing
+  // Penalty — jumping to fix without diagnosis
   const jumpedToFix = (
     (text.includes('restart') && !text.includes('after') && !text.includes('because')) ||
     text.includes('redeploy') ||
@@ -110,46 +100,56 @@ function scoreRCA(rcaText, keyClues) {
   );
   if (jumpedToFix) {
     score = Math.max(0, score - 10);
-    hits.push({ type: 'negative', text: 'Jumped to a fix before fully explaining the cause (−10)' });
+    hits.push({ type: 'negative', text: 'Mentioned a fix before explaining root cause (−10)' });
   }
 
-  return { score: Math.min(80, score), hits, misses };
+  // Vagueness penalty — very short answers can't score well
+  const words = text.trim().split(/\s+/).filter(Boolean).length;
+  if (words < 15 && score > 20) {
+    score = Math.min(score, 20);
+    misses.push({ type: 'negative', text: 'Answer too brief — explain your reasoning in detail' });
+  }
+
+  return { score: Math.min(65, score), hits, misses };
 }
 
 /*
-  Investigation breadth — scored against the actual investigationPath from DB.
-  Each path step that the user visited earns equal points, max 20 pts total.
+  Investigation breadth — max 35 pts.
+
+  Breakdown:
+  - Metrics:  8 pts  (leading indicator — critical)
+  - Events:   9 pts  (most missed — highest value)
+  - Logs:     7 pts
+  - Terminal: 8 pts  (hands-on kubectl validation)
+  - Notes:    3 pts  (good practice, minor reward)
+
+  This means skipping terminal costs 8 pts — enough to drop a grade tier.
 */
+const TOOL_POINTS = { metrics: 8, events: 9, logs: 7, terminal: 8, notes: 3 };
+
 function scoreInvestigation(tabVisits, investigationPath) {
   const hints = [];
+  let bonus = 0;
 
-  const steps = Array.isArray(investigationPath) ? investigationPath : [];
-  const relevantIds = [...new Set(steps.map(pathToTabId).filter(Boolean))];
-
-  const visited   = relevantIds.filter(id => tabVisits[id]);
-  const unvisited = relevantIds.filter(id => !tabVisits[id]);
-
-  const pointsEach = relevantIds.length > 0 ? Math.floor(20 / relevantIds.length) : 5;
-  const bonus = visited.length * pointsEach;
-
-  for (const id of visited) {
-    const step = steps.find(s => pathToTabId(s) === id);
-    hints.push({ type: 'positive', text: `Checked ${capitalize(id)} — ${trimParens(step || id)}` });
-  }
-  for (const id of unvisited) {
-    const step = steps.find(s => pathToTabId(s) === id);
-    hints.push({ type: 'negative', text: `Skipped ${capitalize(id)} — ${trimParens(step || id)}` });
+  for (const id of INVESTIGATION_TOOLS) {
+    const pts = TOOL_POINTS[id];
+    if (tabVisits[id]) {
+      bonus += pts;
+      hints.push({ type: 'positive', text: `Used ${capitalize(id)} (+${pts})` });
+    } else {
+      hints.push({ type: 'negative', text: `Skipped ${capitalize(id)} — missed ${pts} pts` });
+    }
   }
 
   return { bonus, hints };
 }
 
-function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
-function trimParens(s) {
-  // "Check Metrics (Redis latency…)" → "Redis latency…"
-  const m = s.match(/\((.+)\)/);
-  return m ? m[1] : s;
+/* Count only the 5 investigation tools (not the rca submission tab) */
+function countToolsUsed(tabVisits) {
+  return INVESTIGATION_TOOLS.filter(id => tabVisits[id]).length;
 }
+
+function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
 function getGrade(score) {
   if (score >= 90) return { label: 'Outstanding',    color: 'var(--green-soft)', bar: 'var(--green)' };
@@ -234,6 +234,7 @@ export default function Report() {
   const invResult  = scoreInvestigation(tabVisits, investigationPath);
   const finalScore = Math.min(100, rcaResult.score + invResult.bonus);
   const grade      = getGrade(finalScore);
+  const toolsUsed  = countToolsUsed(tabVisits);
 
   // All score feedback lines merged + sorted (positives first)
   const allFeedback = [
@@ -315,17 +316,17 @@ export default function Report() {
             <div className={styles.heroMetaDivider} />
             <div className={styles.heroMetaItem}>
               <span className={styles.heroMetaLabel}>Tools used</span>
-              <span className={styles.heroMetaValue}>{Object.keys(tabVisits).length} / 5</span>
+              <span className={styles.heroMetaValue}>{toolsUsed} / 5</span>
             </div>
             <div className={styles.heroMetaDivider} />
             <div className={styles.heroMetaItem}>
               <span className={styles.heroMetaLabel}>RCA quality</span>
-              <span className={styles.heroMetaValue}>{rcaResult.score} / 80</span>
+              <span className={styles.heroMetaValue}>{rcaResult.score} / 65</span>
             </div>
             <div className={styles.heroMetaDivider} />
             <div className={styles.heroMetaItem}>
-              <span className={styles.heroMetaLabel}>Breadth bonus</span>
-              <span className={styles.heroMetaValue}>+{invResult.bonus}</span>
+              <span className={styles.heroMetaLabel}>Investigation</span>
+              <span className={styles.heroMetaValue}>+{invResult.bonus} / 35</span>
             </div>
           </div>
         </div>
