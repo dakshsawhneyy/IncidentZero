@@ -307,7 +307,8 @@ export default function Investigation() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('metrics');
   const [elapsed, setElapsed] = useState(0);
-  const [tabVisits, setTabVisits] = useState({});
+  // metrics is the default active tab — count it as visited immediately on mount
+  const [tabVisits, setTabVisits] = useState({ metrics: 1 });
   const [showIncidentModal, setShowIncidentModal] = useState(false);
   const [showAbandonModal, setShowAbandonModal] = useState(false);
   const [incidents, setIncidents] = useState([]);

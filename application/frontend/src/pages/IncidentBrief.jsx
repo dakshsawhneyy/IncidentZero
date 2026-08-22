@@ -4,58 +4,81 @@ import styles from './IncidentBrief.module.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
+/* ── Icon components — no emoji ── */
+function IconMetrics()  { return <span className={styles.toolIconSvg} aria-hidden="true">▦</span>; }
+function IconLogs()     { return <span className={styles.toolIconSvg} aria-hidden="true">≡</span>; }
+function IconEvents()   { return <span className={styles.toolIconSvg} aria-hidden="true">◈</span>; }
+function IconTerminal() { return <span className={styles.toolIconSvg} aria-hidden="true">&gt;_</span>; }
+function IconNotes()    { return <span className={styles.toolIconSvg} aria-hidden="true">✎</span>; }
+function IconSubmit()   { return <span className={styles.toolIconSvg} aria-hidden="true">⌲</span>; }
+function IconLock()     { return <span className={styles.lockIconSvg} aria-hidden="true">⌗</span>; }
+
+const TOOLS = [
+  { id: 'metrics',  Icon: IconMetrics,  label: 'Metrics',      desc: 'Latency, error rate, throughput, Redis' },
+  { id: 'logs',     Icon: IconLogs,     label: 'Logs',         desc: 'Application logs from all pods'         },
+  { id: 'events',   Icon: IconEvents,   label: 'Events',       desc: 'Kubernetes cluster events'              },
+  { id: 'terminal', Icon: IconTerminal, label: 'Terminal',     desc: 'kubectl · production namespace'         },
+  { id: 'notes',    Icon: IconNotes,    label: 'Notes',        desc: 'Your investigation scratchpad'          },
+  { id: 'rca',      Icon: IconSubmit,   label: 'Submit RCA',   desc: 'Submit when root cause is found'        },
+];
+
+/* ── Brand logo ── */
+function Logo({ onClick }) {
+  return (
+    <button className={styles.logo} onClick={onClick} aria-label="Go home">
+      <span className={styles.logoMark} aria-hidden="true">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+          <polygon points="2,1 13,7 2,13" fill="currentColor" />
+        </svg>
+      </span>
+      <span className={styles.logoText}>
+        incident<span className={styles.logoAccent}>zero</span>
+      </span>
+    </button>
+  );
+}
+
 export default function IncidentBrief() {
   const navigate = useNavigate();
-  const [revealed, setRevealed] = useState(false);
-  const [now, setNow] = useState(new Date());
+  const [revealed,   setRevealed]   = useState(false);
+  const [now,        setNow]        = useState(new Date());
   const [lockedTool, setLockedTool] = useState(null);
-  const [incidents, setIncidents] = useState([]);
-  const [selectedIncidentId, setSelectedIncidentId] = useState(() => {
-    const stored = Number(sessionStorage.getItem('selectedIncidentId'));
-    return Number.isInteger(stored) && stored > 0 ? stored : null;
-  });
-  const [incident, setIncident] = useState(null);
+  const [incidents,  setIncidents]  = useState([]);
+  const [incident,   setIncident]   = useState(null);
   const [incidentError, setIncidentError] = useState('');
+  const [selectedId, setSelectedId] = useState(() => {
+    const s = Number(sessionStorage.getItem('selectedIncidentId'));
+    return Number.isInteger(s) && s > 0 ? s : null;
+  });
 
+  useEffect(() => { const t = setTimeout(() => setRevealed(true), 260); return () => clearTimeout(t); }, []);
+  useEffect(() => { const t = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(t); }, []);
   useEffect(() => {
-    const t = setTimeout(() => setRevealed(true), 300);
-    return () => clearTimeout(t);
-  }, []);
-
-  useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(t);
-  }, []);
-
-  useEffect(() => {
-    function onKey(e) { if (e.key === 'Escape') setLockedTool(null); }
+    const onKey = e => { if (e.key === 'Escape') setLockedTool(null); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
   useEffect(() => {
     fetch(`${API_BASE}/incidents`)
-      .then((res) => res.json())
-      .then((data) => {
+      .then(r => r.json())
+      .then(data => {
         if (Array.isArray(data) && data.length > 0) {
           setIncidents(data);
-          const chosen = data.find(item => item.rawId === selectedIncidentId) || data[0];
-          setSelectedIncidentId(chosen.rawId);
+          const chosen = data.find(i => i.rawId === selectedId) || data[0];
+          setSelectedId(chosen.rawId);
           setIncident(chosen);
         } else {
-          setIncident(null);
-          setIncidentError('No incident is available yet.');
+          setIncidentError('No incident available.');
         }
       })
-      .catch(() => setIncidentError('Unable to load incident data from the backend.'));
+      .catch(() => setIncidentError('Unable to load incident data.'));
   }, []);
 
   const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  const incidentMeta = incident
-    ? {
-        ...incident,
-        severityLabel: incident.severityLabel || (incident.severity ? incident.severity.charAt(0).toUpperCase() + incident.severity.slice(1) : 'Critical'),
-      }
+
+  const meta = incident
+    ? { ...incident, severityLabel: incident.severityLabel || (incident.severity ? incident.severity.charAt(0).toUpperCase() + incident.severity.slice(1) : 'Critical') }
     : null;
 
   function handleStart() {
@@ -64,188 +87,175 @@ export default function IncidentBrief() {
     navigate('/investigate');
   }
 
-  const incidentCount = incidents.length;
-  const currentSeverity = (incidentMeta?.severityLabel || incidentMeta?.severity || '').toString().trim().toLowerCase();
+  function selectIncident(item) {
+    setIncident(item);
+    setSelectedId(item.rawId);
+    sessionStorage.setItem('selectedIncidentId', item.rawId);
+  }
+
   const relatedIncidents = incidents
-    .filter((item) => {
-      const itemSeverity = (item.severityLabel || item.severity || '').toString().trim().toLowerCase();
-      return currentSeverity ? itemSeverity === currentSeverity : true;
-    })
-    .filter((item) => item.rawId !== incident?.rawId);
-  const visibleIncidents = relatedIncidents.slice(0, 3);
+    .filter(i => i.rawId !== incident?.rawId)
+    .slice(0, 3);
 
   return (
     <div className={styles.page}>
-      {/* Topbar */}
-      <div className={styles.topbar}>
-        <div className={styles.topbarLeft} onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
-          <span className={styles.logoIcon}>⚡</span>
-          <span className={styles.logoText}>Incident<strong>Zero</strong></span>
-        </div>
+
+      {/* ── Topbar ── */}
+      <header className={styles.topbar}>
+        <Logo onClick={() => navigate('/')} />
         <div className={styles.topbarCenter}>
-          <span className={styles.clock}>{timeStr}</span>
+          <span className={styles.clock}>{timeStr} UTC</span>
         </div>
         <div className={styles.topbarRight}>
-          <span className={styles.oncallLabel}>You are On-Call</span>
+          <span className={styles.oncallBadge}>You are On-Call</span>
         </div>
-      </div>
+      </header>
 
-      {/* Main */}
+      {/* ── Main ── */}
       <div className={`${styles.main} ${revealed ? styles.visible : ''}`}>
-        {incidentCount > 1 && (
-          <div className={styles.incidentShelf}>
-            {visibleIncidents.map((item) => (
+
+        {/* Related incidents shelf */}
+        {relatedIncidents.length > 0 && (
+          <div className={styles.shelf}>
+            {relatedIncidents.map(item => (
               <button
                 key={item.rawId}
-                className={`${styles.incidentShelfItem} ${incident?.rawId === item.rawId ? styles.incidentShelfActive : ''}`}
-                onClick={() => {
-                  setIncident(item);
-                  setSelectedIncidentId(item.rawId);
-                  sessionStorage.setItem('selectedIncidentId', item.rawId);
-                }}
+                className={`${styles.shelfCard} ${incident?.rawId === item.rawId ? styles.shelfActive : ''}`}
+                onClick={() => selectIncident(item)}
               >
-                <div className={styles.incidentShelfHeader}>
-                  <span className={styles.incidentShelfId}>{item.id}</span>
-                  <span className={styles.incidentShelfSeverity}>{item.severityLabel || item.severity}</span>
+                <div className={styles.shelfTop}>
+                  <span className={styles.shelfId}>{item.id}</span>
+                  <span className={styles.shelfSev}>{item.severityLabel || item.severity}</span>
                 </div>
-                <div className={styles.incidentShelfTitle}>{item.title}</div>
-                <div className={styles.incidentShelfMeta}>{item.service} · {item.team}</div>
+                <div className={styles.shelfTitle}>{item.title}</div>
+                <div className={styles.shelfMeta}>{item.service} · {item.team}</div>
               </button>
             ))}
           </div>
         )}
 
-        {/* PagerDuty-style alert */}
-        <div className={styles.pdCard}>
-          <div className={styles.pdHeader}>
-            <div className={styles.pdSource}>
-              <span className={styles.pdFlash}>🔴</span>
-              <span className={styles.pdSourceText}>PagerDuty</span>
-              <span className={styles.pdSep}>·</span>
-              <span className={styles.pdSourceTime}>{incidentMeta?.date || 'Loading…'} · {incidentMeta?.startTime || '—'}</span>
+        {/* ── Alert card ── */}
+        <div className={styles.alertCard}>
+          <div className={styles.alertHeader}>
+            <div className={styles.alertSource}>
+              <span className={styles.alertPulse} />
+              <span className={styles.alertSourceName}>PagerDuty</span>
+              <span className={styles.alertDot}>·</span>
+              <span className={styles.alertTime}>{meta?.date || '—'} · {meta?.startTime || '—'}</span>
             </div>
-            <span className={styles.pdSeverity}>{incidentMeta?.severityLabel || incidentMeta?.severity || 'Critical'}</span>
+            <span className={styles.alertSeverityBadge}>{meta?.severityLabel || 'Critical'}</span>
           </div>
 
-          <div className={styles.pdBody}>
-            <h1 className={styles.pdTitle}>🚨 {incidentMeta?.title || 'Loading incident…'}</h1>
-            <p className={styles.pdDesc}>{incidentMeta?.description || incidentError || 'Waiting for the backend to provide incident data.'}</p>
+          <div className={styles.alertBody}>
+            <h1 className={styles.alertTitle}>{meta?.title || incidentError || 'Loading incident…'}</h1>
+            <p className={styles.alertDesc}>{meta?.description || 'Waiting for backend data.'}</p>
           </div>
 
-          <div className={styles.pdMeta}>
-            <div className={styles.metaItem}>
-              <span className={styles.metaLabel}>Incident ID</span>
-              <span className={`${styles.metaValue} ${styles.mono}`}>{incidentMeta?.id || '—'}</span>
+          <div className={styles.alertGrid}>
+            <div className={styles.alertField}>
+              <span className={styles.fieldLabel}>Incident ID</span>
+              <span className={`${styles.fieldValue} ${styles.fieldMono}`}>{meta?.id || '—'}</span>
             </div>
-            <div className={styles.metaItem}>
-              <span className={styles.metaLabel}>Affected Service</span>
-              <span className={styles.metaValue}>{incidentMeta?.service || '—'}</span>
+            <div className={styles.alertField}>
+              <span className={styles.fieldLabel}>Affected Service</span>
+              <span className={styles.fieldValue}>{meta?.service || '—'}</span>
             </div>
-            <div className={styles.metaItem}>
-              <span className={styles.metaLabel}>SLO Breached</span>
-              <span className={`${styles.metaValue} ${styles.metaRed}`}>{incidentMeta?.slo || '—'}</span>
+            <div className={styles.alertField}>
+              <span className={styles.fieldLabel}>SLO Breached</span>
+              <span className={`${styles.fieldValue} ${styles.fieldRed}`}>{meta?.slo || '—'}</span>
             </div>
-            <div className={styles.metaItem}>
-              <span className={styles.metaLabel}>Team</span>
-              <span className={styles.metaValue}>{incidentMeta?.team || '—'}</span>
-            </div>
-          </div>
-
-          <div className={styles.impactBox}>
-            <span className={styles.impactIcon}>⚠️</span>
-            <span className={styles.impactText}>{incidentMeta?.customerImpact || '—'}</span>
-          </div>
-
-          <div className={styles.affectedServices}>
-            <span className={styles.affectedLabel}>Affected Services</span>
-            <div className={styles.serviceList}>
-              {(incidentMeta?.affectedServices || []).map((s) => (
-                <span key={s} className={styles.serviceBadge}>{s}</span>
-              ))}
+            <div className={styles.alertField}>
+              <span className={styles.fieldLabel}>Team</span>
+              <span className={styles.fieldValue}>{meta?.team || '—'}</span>
             </div>
           </div>
 
+          {meta?.customerImpact && (
+            <div className={styles.impactRow}>
+              <span className={styles.impactLabel}>Impact</span>
+              <span className={styles.impactText}>{meta.customerImpact}</span>
+            </div>
+          )}
+
+          {(meta?.affectedServices || []).length > 0 && (
+            <div className={styles.servicesRow}>
+              <span className={styles.servicesLabel}>Affected services</span>
+              <div className={styles.servicesList}>
+                {(meta.affectedServices).map(s => (
+                  <span key={s} className={styles.serviceChip}>{s}</span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Instructions panel */}
-        <div className={styles.instructions}>
-          <div className={styles.instrHeader}>
-            <h2 className={styles.instrTitle}>What's available</h2>
+        {/* ── Tools panel ── */}
+        <div className={styles.toolsPanel}>
+          <div className={styles.toolsPanelHeader}>
+            <span className={styles.toolsPanelLabel}>Available tools</span>
+            <span className={styles.toolsPanelHint}>Locked until investigation starts</span>
           </div>
-          <div className={styles.instrGrid}>
-            {[
-              { icon: '📊', label: 'Metrics', desc: 'Latency, error rate, throughput, Redis metrics' },
-              { icon: '📄', label: 'Logs', desc: 'Application and service logs from all pods' },
-              { icon: '⚡', label: 'Events', desc: 'Kubernetes cluster events' },
-              { icon: '💻', label: 'Terminal', desc: 'kubectl, limited commands available' },
-              { icon: '📝', label: 'Notes', desc: 'Your investigation notebook' },
-              { icon: '🏁', label: 'Submit RCA', desc: 'Submit when you know the root cause' },
-            ].map(tool => (
-              <div
-                key={tool.label}
+          <div className={styles.toolsGrid}>
+            {TOOLS.map(tool => (
+              <button
+                key={tool.id}
                 className={styles.toolCard}
                 onClick={() => setLockedTool(tool)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={e => e.key === 'Enter' && setLockedTool(tool)}
               >
-                <span className={styles.toolIcon}>{tool.icon}</span>
-                <div>
-                  <div className={styles.toolLabel}>{tool.label}</div>
-                  <div className={styles.toolDesc}>{tool.desc}</div>
+                <tool.Icon />
+                <div className={styles.toolText}>
+                  <span className={styles.toolLabel}>{tool.label}</span>
+                  <span className={styles.toolDesc}>{tool.desc}</span>
                 </div>
-                <span className={styles.toolLock}>🔒</span>
-              </div>
+                <IconLock />
+              </button>
             ))}
           </div>
         </div>
 
-        {/* CTA */}
-        <div className={styles.ctaBox}>
+        {/* ── CTA ── */}
+        <div className={styles.ctaSection}>
           <div className={styles.ctaWarning}>
-            <span>⏱</span>
-            <span>Timer starts when you click. Investigate at your own pace — but the clock is watching.</span>
+            <span className={styles.ctaWarningDot} />
+            Timer starts when you click. Investigate at your own pace — but the clock is watching.
           </div>
           <div className={styles.ctaActions}>
             <button className={styles.startBtn} onClick={handleStart}>
-              <span className={styles.startDot}></span>
+              <span className={styles.startBtnDot} />
               Start Investigation
             </button>
             <button className={styles.browseBtn} onClick={() => navigate('/incidents')}>
               Browse other incidents
             </button>
           </div>
-          <p className={styles.ctaNote}>
-            No instructions. No hints. Just signals, logs, and a timer.
-          </p>
+          <p className={styles.ctaNote}>No instructions. No hints. Just signals, logs, and a timer.</p>
         </div>
+
       </div>
 
-      {/* ── Locked Tool Modal ── */}
+      {/* ── Locked tool modal ── */}
       {lockedTool && (
-        <div className={styles.lockBackdrop} onClick={() => setLockedTool(null)}>
-          <div className={styles.lockModal} onClick={e => e.stopPropagation()}>
-            <div className={styles.lockModalHeader}>
-              <span className={styles.lockModalIcon}>{lockedTool.icon}</span>
-              <span className={styles.lockModalName}>{lockedTool.label}</span>
+        <div className={styles.backdrop} onClick={() => setLockedTool(null)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <lockedTool.Icon />
+              <span className={styles.modalToolName}>{lockedTool.label}</span>
             </div>
-            <div className={styles.lockModalBody}>
-              <div className={styles.lockIcon}>🔒</div>
-              <h3 className={styles.lockTitle}>Locked until investigation starts</h3>
-              <p className={styles.lockDesc}>
-                <strong>{lockedTool.label}</strong> — {lockedTool.desc}.
-              </p>
-              <p className={styles.lockHint}>
+            <div className={styles.modalBody}>
+              <span className={styles.modalLockIcon}>⌗</span>
+              <h3 className={styles.modalTitle}>Locked until investigation starts</h3>
+              <p className={styles.modalDesc}><strong>{lockedTool.label}</strong> — {lockedTool.desc}.</p>
+              <p className={styles.modalHint}>
                 Start the investigation to unlock all tools and begin your timer.
-                Everything you need to solve this incident is in there.
+                Everything you need is in there.
               </p>
             </div>
-            <div className={styles.lockModalFooter}>
-              <button className={styles.lockDismiss} onClick={() => setLockedTool(null)}>
+            <div className={styles.modalFooter}>
+              <button className={styles.modalDismiss} onClick={() => setLockedTool(null)}>
                 Not yet
               </button>
-              <button className={styles.lockStart} onClick={handleStart}>
-                <span className={styles.lockStartDot} />
+              <button className={styles.modalStart} onClick={handleStart}>
+                <span className={styles.startBtnDot} style={{ background: '#fff' }} />
                 Start Investigation
               </button>
             </div>

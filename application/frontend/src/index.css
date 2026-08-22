@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -7,64 +7,114 @@
 }
 
 :root {
-  /* ── Backgrounds ── */
-  --bg-void:      #020408;
-  --bg-primary:   #04080f;
-  --bg-secondary: #060c14;
-  --bg-card:      #080f1a;
-  --bg-card-hover:#0d1826;
-  --bg-panel:     #060b13;
-  --bg-terminal:  #020608;
-  --bg-inset:     #030711;
+  /* ── Core backgrounds — deep charcoal, not blue-black ── */
+  --bg-void:      #0a0a0b;
+  --bg-base:      #0d0d0f;
+  --bg-raised:    #111114;
+  --bg-card:      #141417;
+  --bg-card-hover:#18181c;
+  --bg-input:     #111114;
+  --bg-overlay:   #1c1c21;
+  --bg-inset:     #0d0d0f;
 
-  /* ── Borders ── */
-  --border:        #0f1f30;
-  --border-mid:    #162840;
-  --border-accent: #1e3a58;
-  --border-bright: #2a5480;
+  /* ── Borders — subtle warm-grey ── */
+  --border-subtle:  rgba(255,255,255,0.055);
+  --border-default: rgba(255,255,255,0.09);
+  --border-strong:  rgba(255,255,255,0.15);
+  --border-focus:   rgba(251,191,36,0.5);
+
+  /* Legacy aliases kept so older CSS doesn't break */
+  --border:        rgba(255,255,255,0.07);
+  --border-mid:    rgba(255,255,255,0.1);
+  --border-accent: rgba(255,255,255,0.14);
+  --border-bright: rgba(255,255,255,0.2);
 
   /* ── Text ── */
-  --text-primary:   #c9d8e8;
-  --text-secondary: #6b8aa8;
-  --text-muted:     #2e4460;
-  --text-dim:       #1a2e44;
-  --text-code:      #5bc8fa;
-  --text-green:     #3dffa0;
+  --text-primary:   #f0f0f2;
+  --text-secondary: #8a8a9a;
+  --text-tertiary:  #55556a;
+  --text-muted:     #3a3a50;
+  --text-dim:       #2a2a3a;
+  --text-inverse:   #0a0a0b;
 
-  /* ── Signal colors ── phosphor-style */
-  --red:        #ff3b3b;
-  --red-dim:    #1a0808;
-  --red-glow:   rgba(255, 59, 59, 0.18);
-  --red-mid:    rgba(255, 59, 59, 0.08);
+  /* ── Brand / Accent — amber-gold ── */
+  --amber:      #f59e0b;
+  --amber-soft: #fbbf24;
+  --amber-dim:  rgba(245,158,11,0.1);
+  --amber-glow: rgba(245,158,11,0.2);
+  --amber-border: rgba(245,158,11,0.3);
 
-  --orange:     #ff7b2a;
-  --orange-dim: #1a0c04;
-  --orange-mid: rgba(255, 123, 42, 0.08);
+  /* ── Signal colors ── */
+  --red:        #ef4444;
+  --red-soft:   #f87171;
+  --red-dim:    rgba(239,68,68,0.08);
+  --red-border: rgba(239,68,68,0.25);
+  --red-glow:   rgba(239,68,68,0.15);
 
-  --yellow:     #ffd93b;
-  --yellow-dim: #1a1503;
-  --yellow-mid: rgba(255, 217, 59, 0.07);
+  --orange:     #f97316;
+  --orange-dim: rgba(249,115,22,0.08);
+  --orange-border: rgba(249,115,22,0.25);
 
-  --green:      #00ff88;
-  --green-dim:  #001a0e;
-  --green-glow: rgba(0, 255, 136, 0.15);
-  --green-mid:  rgba(0, 255, 136, 0.07);
+  --yellow:     #eab308;
+  --yellow-dim: rgba(234,179,8,0.08);
+  --yellow-border: rgba(234,179,8,0.25);
 
-  --blue:       #2d8fff;
-  --blue-dim:   #041028;
-  --blue-glow:  rgba(45, 143, 255, 0.18);
-  --blue-mid:   rgba(45, 143, 255, 0.07);
+  --green:      #22c55e;
+  --green-soft: #4ade80;
+  --green-dim:  rgba(34,197,94,0.08);
+  --green-border: rgba(34,197,94,0.25);
+  --green-glow: rgba(34,197,94,0.15);
 
-  --cyan:       #00d4ff;
-  --cyan-dim:   #001a22;
-  --cyan-mid:   rgba(0, 212, 255, 0.07);
+  --blue:       #3b82f6;
+  --blue-soft:  #60a5fa;
+  --blue-dim:   rgba(59,130,246,0.08);
+  --blue-border: rgba(59,130,246,0.25);
+  --blue-glow:  rgba(59,130,246,0.15);
 
-  --purple:     #c084fc;
-  --purple-dim: #130820;
-  --purple-mid: rgba(192, 132, 252, 0.07);
+  --cyan:       #06b6d4;
+  --cyan-soft:  #22d3ee;
+  --cyan-dim:   rgba(6,182,212,0.08);
+  --cyan-border: rgba(6,182,212,0.25);
 
-  --accent:       #2d8fff;
-  --accent-hover: #1a7aef;
+  --purple:     #a855f7;
+  --purple-dim: rgba(168,85,247,0.08);
+  --purple-border: rgba(168,85,247,0.25);
+
+  /* Legacy signal aliases */
+  --green-mid:  rgba(34,197,94,0.07);
+  --blue-mid:   rgba(59,130,246,0.07);
+  --cyan-mid:   rgba(6,182,212,0.07);
+  --red-mid:    rgba(239,68,68,0.07);
+  --orange-mid: rgba(249,115,22,0.07);
+  --yellow-mid: rgba(234,179,8,0.07);
+  --purple-mid: rgba(168,85,247,0.07);
+
+  /* Legacy -dim aliases */
+  --green-dim-bg:  rgba(34,197,94,0.06);
+  --blue-dim-bg:   rgba(59,130,246,0.06);
+  --red-dim-bg:    rgba(239,68,68,0.06);
+  --orange-dim-bg: rgba(249,115,22,0.06);
+
+  /* ── Radius system ── */
+  --radius-xs:   3px;
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   16px;
+  --radius-xl:   22px;
+  --radius-pill: 999px;
+
+  /* ── Shadows ── */
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.4);
+  --shadow-md:  0 4px 16px rgba(0,0,0,0.5);
+  --shadow-lg:  0 12px 40px rgba(0,0,0,0.6);
+  --shadow-xl:  0 24px 64px rgba(0,0,0,0.7);
+
+  /* ── Code ── */
+  --text-code: #7dd3fc;
+
+  /* accent alias for legacy */
+  --accent:       var(--amber);
+  --accent-hover: #e08e0a;
 
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 14px;
@@ -80,41 +130,16 @@ html, body, #root {
   min-height: 100vh;
 }
 
-/* ── Global texture overlay ── */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image:
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(0, 0, 0, 0.08) 2px,
-      rgba(0, 0, 0, 0.08) 4px
-    );
-  pointer-events: none;
-  z-index: 9999;
-  opacity: 0.4;
-}
-
 /* ── Scrollbars ── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: var(--bg-void); }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: var(--border-accent);
-  border-radius: 2px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 99px;
 }
-::-webkit-scrollbar-thumb:hover { background: var(--border-bright); }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
 
 button { cursor: pointer; font-family: inherit; }
 textarea, input { font-family: inherit; }
 
-.mono {
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
-}
-
-/* ── Shared glow utilities ── */
-.glowRed    { box-shadow: 0 0 12px var(--red-glow),   inset 0 0 12px var(--red-mid); }
-.glowGreen  { box-shadow: 0 0 12px var(--green-glow), inset 0 0 12px var(--green-mid); }
-.glowBlue   { box-shadow: 0 0 12px var(--blue-glow),  inset 0 0 12px var(--blue-mid); }
+.mono { font-family: 'JetBrains Mono', monospace; }

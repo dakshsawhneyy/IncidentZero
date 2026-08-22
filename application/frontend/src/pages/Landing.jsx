@@ -1,317 +1,369 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Landing.module.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
-/* ── Typewriter hook ── */
-function useTypewriter(lines, speed = 28) {
-  const [displayed, setDisplayed] = useState([]);
-  const [lineIdx, setLineIdx] = useState(0);
-  const [charIdx, setCharIdx] = useState(0);
-  const [done, setDone] = useState(false);
-
-  useEffect(() => {
-    if (lineIdx >= lines.length) { setDone(true); return; }
-    const line = lines[lineIdx];
-    if (charIdx <= line.text.length) {
-      const t = setTimeout(() => {
-        setDisplayed(prev => {
-          const next = [...prev];
-          next[lineIdx] = { ...line, text: line.text.slice(0, charIdx) };
-          return next;
-        });
-        setCharIdx(c => c + 1);
-      }, line.delay && charIdx === 0 ? line.delay : speed);
-      return () => clearTimeout(t);
-    } else {
-      setLineIdx(l => l + 1);
-      setCharIdx(0);
-    }
-  }, [lineIdx, charIdx, lines, speed]);
-
-  return { displayed, done };
+/* ── Logo — exported for reuse ── */
+export function NavLogo({ onClick }) {
+  return (
+    <button className={styles.navLogo} onClick={onClick}>
+      <span className={styles.navLogoMark} aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <polygon points="2,1 13,7 2,13" fill="currentColor" />
+        </svg>
+      </span>
+      <span className={styles.navLogoText}>
+        incident<span className={styles.navLogoAccent}>zero</span>
+      </span>
+    </button>
+  );
 }
 
-/* ── Boot sequence lines ── */
-const BOOT_LINES = [
-  { text: 'incident-zero v0.1.0 — production simulation engine', type: 'system', delay: 0 },
-  { text: 'loading incident database...', type: 'system', delay: 120 },
-  { text: '[  OK  ] incidents loaded: 1 active', type: 'ok', delay: 80 },
-  { text: '[  OK  ] simulation engine ready', type: 'ok', delay: 60 },
-  { text: '──────────────────────────────────────────────────', type: 'sep', delay: 40 },
-  { text: '  INCOMING ALERT  ──  07:13:01 UTC', type: 'alert', delay: 300 },
-  { text: '', type: 'blank', delay: 0 },
-  { text: '  SOURCE   PagerDuty', type: 'data', delay: 30 },
-  { text: '  SERVICE  checkout-api  [production]', type: 'data', delay: 30 },
-  { text: '  SEVERITY P1 · Critical', type: 'critical', delay: 30 },
-  { text: '  SLO      P99 latency 1247ms  (SLO: 200ms)  ❌ BREACHED', type: 'critical', delay: 30 },
-  { text: '  IMPACT   ~2,400 failed checkouts in last 15min', type: 'warn', delay: 30 },
-  { text: '', type: 'blank', delay: 0 },
-  { text: '──────────────────────────────────────────────────', type: 'sep', delay: 40 },
-  { text: 'You are On-Call. Respond now.', type: 'prompt', delay: 400 },
+/* ── CSS-only live UI panels — no images needed ── */
+
+const METRIC_PANELS = [
+  { label: 'P99 Latency',  value: '1,247ms', sub: '↑ from 80ms',  status: 'crit', w: 88 },
+  { label: 'Error Rate',   value: '18.3%',   sub: '↑ from 0.1%',  status: 'crit', w: 72 },
+  { label: 'Redis Memory', value: '7.68 GB', sub: '96% of limit',  status: 'warn', w: 96 },
+  { label: 'Request Rate', value: '2,841/s', sub: '↓ from 4,200',  status: 'warn', w: 58 },
+  { label: 'CPU',          value: '42m',     sub: 'nominal',        status: 'ok',   w: 18 },
+  { label: 'Pod Restarts', value: '0',       sub: 'healthy',        status: 'ok',   w: 2  },
 ];
 
-/* ── Terminal block used below hero ── */
-const KUBECTL_OUTPUT = `$ kubectl top pods -n production
-NAME                         CPU(cores)   MEMORY(bytes)
-checkout-api-7d9f8c-xk2pl    42m          180Mi
-redis-cache-0                180m         7680Mi   ← 7.68GB / 8GB
-payment-api-6b8d4f-hj3kp     28m          145Mi
-postgres-0                   35m          512Mi`;
+const LOG_ROWS = [
+  { t: '07:12:58', l: 'WARN',  svc: 'checkout', msg: 'Redis connection slow — 340ms',    cls: 'w' },
+  { t: '07:13:01', l: 'ERROR', svc: 'checkout', msg: 'Redis i/o timeout',                 cls: 'e' },
+  { t: '07:13:03', l: 'WARN',  svc: 'checkout', msg: 'Circuit breaker OPEN for redis',    cls: 'w' },
+  { t: '07:13:13', l: 'ERROR', svc: 'checkout', msg: 'All retries exhausted',             cls: 'e' },
+  { t: '07:13:24', l: 'ERROR', svc: 'checkout', msg: 'Error rate 18.3% over 60s',         cls: 'e' },
+];
 
-const LOG_OUTPUT = `$ kubectl logs checkout-api-7d9f8c-xk2pl --tail=5
-07:12:58 WARN  Redis connection slow — latency 340ms
-07:13:01 ERROR Redis dial tcp 10.0.1.45:6379: i/o timeout
-07:13:03 WARN  Circuit breaker OPEN for redis-cache
-07:13:13 ERROR All retries exhausted. Request failed.
-07:13:24 WARN  Error rate 18.3% over last 60s`;
-
-/* ── Static code block ── */
-function CodeBlock({ label, content, color = 'var(--green)' }) {
+function PanelChrome({ title, badge, badgeStyle, children }) {
   return (
-    <div className={styles.codeBlock}>
-      <div className={styles.codeBlockHeader}>
-        <span className={styles.codeBlockDot} style={{ background: '#ff5f56' }} />
-        <span className={styles.codeBlockDot} style={{ background: '#ffbd2e' }} />
-        <span className={styles.codeBlockDot} style={{ background: '#27c93f' }} />
-        <span className={styles.codeBlockLabel}>{label}</span>
+    <div className={styles.panel}>
+      <div className={styles.panelBar}>
+        <div className={styles.panelDots}>
+          <span style={{ background: '#ff5f56' }} />
+          <span style={{ background: '#ffbd2e' }} />
+          <span style={{ background: '#27c93f' }} />
+        </div>
+        <span className={styles.panelTitle}>{title}</span>
+        {badge && <span className={styles.panelBadge} style={badgeStyle}>{badge}</span>}
       </div>
-      <pre className={styles.codeBlockBody} style={{ color }}>{content}</pre>
+      {children}
     </div>
   );
 }
 
-/* ── Main Component ── */
+function PlatformShowcase() {
+  return (
+    <div className={styles.showcase}>
+      <div className={styles.showcaseGlow} />
+
+      {/* ── Panel A: Metrics ── */}
+      <div className={`${styles.showcaseSlot} ${styles.slotA}`}>
+        <PanelChrome
+          title="Metrics — production"
+          badge="P1 · Critical"
+          badgeStyle={{ color: 'var(--red-soft)', background: 'var(--red-dim)', borderColor: 'var(--red-border)' }}
+        >
+          <div className={styles.metricsGrid}>
+            {METRIC_PANELS.map(m => (
+              <div key={m.label} className={`${styles.metricTile} ${styles[`mt_${m.status}`]}`}>
+                <div className={styles.metricTileBar} style={{ width: `${m.w}%` }} />
+                <span className={styles.metricTileLabel}>{m.label}</span>
+                <span className={styles.metricTileValue}>{m.value}</span>
+                <span className={styles.metricTileSub}>{m.sub}</span>
+              </div>
+            ))}
+          </div>
+        </PanelChrome>
+      </div>
+
+      {/* ── Panel B: Logs ── */}
+      <div className={`${styles.showcaseSlot} ${styles.slotB}`}>
+        <PanelChrome
+          title="Logs — all services"
+          badge="5 errors"
+          badgeStyle={{ color: 'var(--red-soft)', background: 'var(--red-dim)', borderColor: 'var(--red-border)' }}
+        >
+          <div className={styles.logTable}>
+            <div className={styles.logFilters}>
+              {['ALL','ERROR','WARN','INFO'].map((f, i) => (
+                <span key={f} className={`${styles.logFilter} ${i === 0 ? styles.logFilterActive : ''}`}>{f}</span>
+              ))}
+              <span className={styles.logCount}>5 lines</span>
+            </div>
+            {LOG_ROWS.map((r, i) => (
+              <div key={i} className={`${styles.logRow} ${r.cls === 'e' ? styles.logRowError : styles.logRowWarn}`}>
+                <span className={styles.logTime}>{r.t}</span>
+                <span className={styles.logLevel}>{r.l}</span>
+                <span className={styles.logSvc}>{r.svc}</span>
+                <span className={styles.logMsg}>{r.msg}</span>
+              </div>
+            ))}
+          </div>
+        </PanelChrome>
+      </div>
+
+      {/* ── Panel C: Post-incident report ── */}
+      <div className={`${styles.showcaseSlot} ${styles.slotC}`}>
+        <PanelChrome title="Post-incident Report" badge="INC-001" badgeStyle={{ color: 'var(--amber)', background: 'var(--amber-dim)', borderColor: 'var(--amber-border)' }}>
+          <div className={styles.reportPreview}>
+            <div className={styles.rpScoreRow}>
+              <div className={styles.rpScore}>
+                <span className={styles.rpScoreNum}>72</span>
+                <span className={styles.rpScoreMax}>/100</span>
+              </div>
+              <div className={styles.rpGrade}>Developing</div>
+            </div>
+            <div className={styles.rpBar}>
+              <div className={styles.rpBarFill} style={{ width: '72%' }} />
+            </div>
+            <div className={styles.rpItems}>
+              {[
+                { ok: true,  t: 'Identified Redis as root cause' },
+                { ok: true,  t: 'Checked kubectl top pods' },
+                { ok: false, t: 'Skipped Kubernetes Events' },
+                { ok: false, t: 'Restarted before diagnosing' },
+              ].map((it, i) => (
+                <div key={i} className={`${styles.rpItem} ${it.ok ? styles.rpItemOk : styles.rpItemFail}`}>
+                  <span>{it.ok ? '✓' : '✗'}</span>
+                  <span>{it.t}</span>
+                </div>
+              ))}
+            </div>
+            <div className={styles.rpLesson}>
+              <span className={styles.rpLessonTag}>LESSON</span>
+              Check Redis latency first — it spikes before errors appear.
+            </div>
+          </div>
+        </PanelChrome>
+      </div>
+
+    </div>
+  );
+}
+
+function Divider({ label }) {
+  return (
+    <div className={styles.divider}>
+      <span className={styles.dividerLine} />
+      <span className={styles.dividerLabel}>// {label}</span>
+      <span className={styles.dividerLine} />
+    </div>
+  );
+}
+
+const COMPARE = [
+  { them: 'Deploy nginx to K8s',         us: 'nginx is down — find out why.' },
+  { them: 'Learn kubectl commands',       us: 'P1 is firing — which command first?' },
+  { them: 'Configure Prometheus alerts',  us: 'Alert fired — what does it mean?' },
+  { them: 'Complete a guided exercise',   us: 'No instructions. Just evidence.' },
+];
+
+const SCORE_LINES = [
+  { ok: true,  text: 'Identified Redis as root dependency'  },
+  { ok: true,  text: 'Checked kubectl top pods first'       },
+  { ok: false, text: 'Never opened Kubernetes Events'       },
+  { ok: false, text: 'Restarted pod before finding cause'   },
+];
+
+const KUBECTL_OUTPUT = `$ kubectl top pods -n production
+NAME                          CPU     MEMORY
+checkout-api-7d9f8c-xk2pl     42m     180Mi
+redis-cache-0                 180m    7680Mi  <- 7.68 / 8 GB
+payment-api-6b8d4f-hj3kp      28m     145Mi
+postgres-0                    35m     512Mi`;
+
+const LOG_OUTPUT = `$ kubectl logs checkout-api-7d9f8c-xk2pl --tail=5
+07:12:58 WARN  Redis connection slow — 340ms
+07:13:01 ERROR Redis dial tcp 10.0.1.45:6379: timeout
+07:13:03 WARN  Circuit breaker OPEN for redis-cache
+07:13:13 ERROR All retries exhausted. Request failed.
+07:13:24 WARN  Error rate 18.3% over last 60s`;
+
+function CodeBlock({ label, content, accent }) {
+  return (
+    <div className={styles.codeBlock}>
+      <div className={styles.codeBlockBar}>
+        <span className={styles.cbDot} style={{ background: '#ff5f56' }} />
+        <span className={styles.cbDot} style={{ background: '#ffbd2e' }} />
+        <span className={styles.cbDot} style={{ background: '#27c93f' }} />
+        <span className={styles.cbLabel}>{label}</span>
+      </div>
+      <pre className={styles.codeBlockBody} style={{ color: accent }}>{content}</pre>
+    </div>
+  );
+}
+
+/* ── Main component ── */
 export default function Landing() {
-  const navigate = useNavigate();
-  const termRef = useRef(null);
-  const [bootDone, setBootDone] = useState(false);
-  const [showCursor, setShowCursor] = useState(true);
+  const navigate  = useNavigate();
   const [incidents, setIncidents] = useState([]);
-  const [selectedIncidentId, setSelectedIncidentId] = useState(() => {
-    const storedId = Number(sessionStorage.getItem('selectedIncidentId'));
-    return Number.isInteger(storedId) && storedId > 0 ? storedId : null;
+  const [activeId,  setActiveId]  = useState(() => {
+    const s = Number(sessionStorage.getItem('selectedIncidentId'));
+    return Number.isInteger(s) && s > 0 ? s : null;
   });
-  const { displayed, done } = useTypewriter(BOOT_LINES, 22);
-
-  useEffect(() => {
-    if (done) setBootDone(true);
-  }, [done]);
-
-  // Blink cursor
-  useEffect(() => {
-    const t = setInterval(() => setShowCursor(c => !c), 530);
-    return () => clearInterval(t);
-  }, []);
 
   useEffect(() => {
     fetch(`${API_BASE}/incidents`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setIncidents(data);
-          const storedId = Number(sessionStorage.getItem('selectedIncidentId'));
-          const chosen = data.find(item => item.rawId === storedId) || data[0];
-          setSelectedIncidentId(chosen.rawId);
-          sessionStorage.setItem('selectedIncidentId', chosen.rawId);
-        } else {
-          setIncidents([]);
-        }
+      .then(r => r.json())
+      .then(data => {
+        if (!Array.isArray(data) || !data.length) return;
+        setIncidents(data);
+        const stored = Number(sessionStorage.getItem('selectedIncidentId'));
+        const chosen = data.find(i => i.rawId === stored) || data[0];
+        setActiveId(chosen.rawId);
+        sessionStorage.setItem('selectedIncidentId', chosen.rawId);
       })
-      .catch(() => setIncidents([]));
+      .catch(() => {});
   }, []);
 
-  const activeIncident = incidents.find(item => item.rawId === selectedIncidentId) || incidents[0] || null;
-  const incidentCount = incidents.length;
+  const active = incidents.find(i => i.rawId === activeId) || incidents[0] || null;
 
   function handleStart() {
-    if (activeIncident) {
-      sessionStorage.setItem('selectedIncidentId', activeIncident.rawId);
-    }
+    if (active) sessionStorage.setItem('selectedIncidentId', active.rawId);
     sessionStorage.setItem('incidentStart', Date.now().toString());
     navigate('/incident');
   }
 
-  // Auto-scroll terminal
-  useEffect(() => {
-    if (termRef.current) {
-      termRef.current.scrollTop = termRef.current.scrollHeight;
-    }
-  }, [displayed]);
-
   return (
     <div className={styles.page}>
 
-      {/* ── Topbar ── */}
+      {/* ── Nav ── */}
       <nav className={styles.nav}>
-        <div className={styles.navLogo}>
-          <span className={styles.navLogoMark}>▶</span>
-          <span className={styles.navLogoText}>incident<span className={styles.navLogoAccent}>zero</span></span>
-        </div>
+        <NavLogo onClick={() => {}} />
         <div className={styles.navRight}>
-          <span className={styles.navStatus}>
-            <span className={styles.navStatusDot} />
-            {incidentCount} active incident{incidentCount === 1 ? '' : 's'}
-          </span>
-          <span className={styles.navBeta}>v1.0 BETA</span>
+          <div className={styles.navStatus}>
+            <span className={styles.navPulse} />
+            {incidents.length > 0
+              ? `${incidents.length} incident${incidents.length === 1 ? '' : 's'} active`
+              : 'loading…'}
+          </div>
+          <span className={styles.navChip}>BETA</span>
         </div>
       </nav>
 
-      {/* ── Hero: Boot Terminal ── */}
+      {/* ── Hero ── */}
       <section className={styles.hero}>
-        <div className={styles.heroLeft}>
-          {/* Terminal window */}
-          <div className={styles.termWindow}>
-            <div className={styles.termBar}>
-              <div className={styles.termDots}>
-                <span className={styles.termDot} style={{ background: '#ff5f56' }} />
-                <span className={styles.termDot} style={{ background: '#ffbd2e' }} />
-                <span className={styles.termDot} style={{ background: '#27c93f' }} />
-              </div>
-              <span className={styles.termTitle}>incident-zero — zsh</span>
-              <span />
-            </div>
-            <div className={styles.termBody} ref={termRef}>
-              {displayed.map((line, i) => (
-                <div key={i} className={`${styles.termLine} ${styles[`type_${line.type}`]}`}>
-                  {line.text}
-                </div>
-              ))}
-              {!done && (
-                <span className={`${styles.termCursor} ${showCursor ? styles.cursorOn : styles.cursorOff}`}>█</span>
-              )}
-              {bootDone && (
-                <div className={styles.termPromptLine}>
-                  <span className={styles.termPs}>oncall@prod:~$</span>
-                  <span className={styles.termInput}> _</span>
-                </div>
-              )}
-            </div>
+
+        {/* Left — copy */}
+        <div className={styles.heroCopy}>
+          <p className={styles.heroEyebrow}>SRE Simulation Platform</p>
+
+          <h1 className={styles.heroHeading}>
+            The gap between knowing the tools and
+            {' '}<em className={styles.heroHeadingEm}>surviving production.</em>
+          </h1>
+
+          <p className={styles.heroBody}>
+            You've done the labs. You know kubectl. But when the pager fires at
+            3&nbsp;AM - what do you check <strong>first</strong>?
+          </p>
+
+          <ul className={styles.heroBullets}>
+            <li><span className={styles.heroBulletDot} />Realistic P1 incidents with real signals</li>
+            <li><span className={styles.heroBulletDot} />Metrics, logs, events, terminal — no hints</li>
+            <li><span className={styles.heroBulletDot} />AI-graded RCA with senior SRE feedback</li>
+          </ul>
+
+          <div className={styles.heroActions}>
+            <button className={styles.btnPrimary} onClick={handleStart}>
+              <span className={styles.btnDot} />
+              Respond to {active ? active.id : 'active incident'}
+            </button>
+            <span className={styles.heroMeta}>
+              {active
+                ? `${active.severityLabel || active.severity} · ${active.service}`
+                : 'no signup · ~15 min · incident ready'}
+            </span>
           </div>
         </div>
 
-        <div className={styles.heroRight}>
-          <div className={styles.heroBadge}>
-            <span className={styles.heroBadgeDot} />
-            SRE SIMULATION PLATFORM
-          </div>
-          <h1 className={styles.heroTitle}>
-            The place between<br />
-            <span className={styles.heroTitleAccent}>learning tools</span><br />
-            and surviving production.
-          </h1>
-          <p className={styles.heroDesc}>
-            You've done the labs. You know kubectl.<br />
-            But when the pager fires at 3 AM —<br />
-            what do you check first?
-          </p>
-          <div className={styles.heroActions}>
-            <button className={styles.btnRespond} onClick={handleStart}>
-              <span className={styles.btnRespondDot} />
-              respond to {activeIncident ? activeIncident.id : 'active incident'}
-            </button>
-            <div className={styles.heroBtnMeta}>{activeIncident ? `${activeIncident.severityLabel || activeIncident.severity} severity · ${activeIncident.service}` : 'no signup · ~15 min · incident ready'}</div>
-          </div>
+        {/* Right — platform screenshots */}
+        <div className={styles.heroVisual}>
+          <PlatformShowcase />
         </div>
+
       </section>
 
-      {/* ── Divider ── */}
-      <div className={styles.sectionDivider}>
-        <span className={styles.dividerLine} />
-        <span className={styles.dividerLabel}>// investigation preview</span>
-        <span className={styles.dividerLine} />
-      </div>
+      <Divider label="investigation preview" />
 
-      {/* ── Investigation Preview ── */}
-      <section className={styles.preview}>
-        <div className={styles.previewHeader}>
-          <span className={styles.previewTag}>WHAT YOU'LL ACTUALLY DO</span>
-          <h2 className={styles.previewTitle}>No walkthroughs. No hints.<br />Just signals and a timer.</h2>
+      {/* ── Preview ── */}
+      <section className={styles.section}>
+        <div className={styles.sectionHead}>
+          <p className={styles.eyebrow}>What you'll actually do</p>
+          <h2 className={styles.sectionTitle}>No walkthroughs. No hints. Just signals and a timer.</h2>
         </div>
-        <div className={styles.previewTerminals}>
-          <CodeBlock label="kubectl top pods" content={KUBECTL_OUTPUT} color="var(--text-green)" />
-          <CodeBlock label="kubectl logs checkout-api" content={LOG_OUTPUT} color="var(--text-code)" />
+        <div className={styles.twoTerminals}>
+          <CodeBlock label="kubectl top pods"            content={KUBECTL_OUTPUT} accent="var(--green-soft)" />
+          <CodeBlock label="kubectl logs checkout-api"   content={LOG_OUTPUT}     accent="var(--text-code)" />
         </div>
         <p className={styles.previewNote}>
-          ↑ This is what you see. What you do next is up to you.
+          This is what you see. What you do next is up to you.
         </p>
       </section>
 
-      {/* ── Divider ── */}
-      <div className={styles.sectionDivider}>
-        <span className={styles.dividerLine} />
-        <span className={styles.dividerLabel}>// vs other platforms</span>
-        <span className={styles.dividerLine} />
-      </div>
+      <Divider label="vs. other platforms" />
 
-      {/* ── Comparison ── */}
-      <section className={styles.compare}>
-        <div className={styles.compareGrid}>
-          {[
-            { lab: 'Deploy nginx to K8s',         us: 'nginx is down. find out why.' },
-            { lab: 'Learn kubectl commands',       us: 'P1 is firing. which command first?' },
-            { lab: 'Configure Prometheus alerts',  us: 'alert fired. what does it mean?' },
-            { lab: 'Complete a guided exercise',   us: 'no instructions. just evidence.' },
-          ].map((row, i) => (
+      {/* ── Compare ── */}
+      <section className={styles.section}>
+        <div className={styles.compareTable}>
+          <div className={styles.compareHead}>
+            <span className={styles.compareColLabel}>Other platforms</span>
+            <span />
+            <span className={styles.compareColLabel} style={{ color: 'var(--amber-soft)' }}>Incident Zero</span>
+          </div>
+          {COMPARE.map((row, i) => (
             <div key={i} className={styles.compareRow}>
-              <div className={styles.compareLab}>
-                <span className={styles.compareIcon}>✗</span>
-                <span>{row.lab}</span>
-              </div>
-              <div className={styles.compareArrow}>→</div>
-              <div className={styles.compareUs}>
-                <span className={styles.compareIconGreen}>✓</span>
-                <span>{row.us}</span>
-              </div>
+              <span className={styles.compareThemCell}>
+                <span className={styles.compareX}>✕</span>
+                {row.them}
+              </span>
+              <span className={styles.compareArrow}>→</span>
+              <span className={styles.compareUsCell}>
+                <span className={styles.compareCheck}>✓</span>
+                {row.us}
+              </span>
             </div>
           ))}
         </div>
-        <div className={styles.compareCaption}>
+        <p className={styles.compareFoot}>
           Other platforms teach you how to configure systems.
           We teach you how to save them.
-        </div>
+        </p>
       </section>
 
-      {/* ── Divider ── */}
-      <div className={styles.sectionDivider}>
-        <span className={styles.dividerLine} />
-        <span className={styles.dividerLabel}>// scoring</span>
-        <span className={styles.dividerLine} />
-      </div>
+      <Divider label="scoring" />
 
-      {/* ── Scoring preview ── */}
-      <section className={styles.scoring}>
-        <div className={styles.scoringLeft}>
-          <span className={styles.scoringTag}>AFTER EVERY INCIDENT</span>
-          <h2 className={styles.scoringTitle}>Your investigation<br />gets graded.</h2>
-          <p className={styles.scoringDesc}>
-            Not just whether you found the root cause.
-            How you investigated — what you checked, what you missed,
-            and whether your thinking matches how a senior SRE approaches it.
-          </p>
-        </div>
-        <div className={styles.scoringRight}>
+      {/* ── Scoring ── */}
+      <section className={styles.section}>
+        <div className={styles.scoringLayout}>
+          <div className={styles.scoringCopy}>
+            <p className={styles.eyebrow}>After every incident</p>
+            <h2 className={styles.sectionTitle}>Your investigation gets graded.</h2>
+            <p className={styles.scoringBody}>
+              Not just whether you found the root cause — how you investigated.
+              What you checked, what you skipped, and whether your thinking matches
+              how a senior SRE approaches a P1.
+            </p>
+          </div>
+
           <div className={styles.scoreCard}>
-            <div className={styles.scoreCardHeader}>
+            <div className={styles.scoreCardTop}>
               <span className={styles.scoreCardId}>INC-001 · POST-INCIDENT</span>
-              <span className={styles.scoreCardScore}>72<span className={styles.scoreCardMax}>/100</span></span>
+              <span className={styles.scoreNum}>72<span className={styles.scoreMax}>/100</span></span>
             </div>
-            <div className={styles.scoreCardLines}>
-              {[
-                { ok: true,  t: 'Identified Redis as root dependency' },
-                { ok: true,  t: 'Checked kubectl top pods' },
-                { ok: false, t: 'Never opened Kubernetes Events' },
-                { ok: false, t: 'Restarted pod before finding cause' },
-              ].map((l, i) => (
-                <div key={i} className={`${styles.scoreLine} ${l.ok ? styles.scoreOk : styles.scoreFail}`}>
-                  <span className={styles.scoreLineMark}>{l.ok ? '✓' : '✗'}</span>
-                  <span>{l.t}</span>
-                </div>
-              ))}
-            </div>
-            <div className={styles.scoreCardLesson}>
-              <span className={styles.scoreLessonLabel}>LESSON</span>
+            {SCORE_LINES.map((l, i) => (
+              <div key={i} className={`${styles.scoreLine} ${l.ok ? styles.scoreOk : styles.scoreFail}`}>
+                <span className={styles.scoreLineMark}>{l.ok ? '✓' : '✗'}</span>
+                {l.text}
+              </div>
+            ))}
+            <div className={styles.scoreLesson}>
+              <span className={styles.scoreLessonTag}>LESSON</span>
               Redis latency spiked before the circuit breaker opened.
               Check dependency metrics first.
             </div>
@@ -319,25 +371,26 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── Final CTA ── */}
+      {/* ── CTA ── */}
       <section className={styles.cta}>
-        <div className={styles.ctaTerminal}>
+        <div className={styles.ctaPrompt}>
           <span className={styles.ctaPs}>oncall@prod:~$</span>
-          <span className={styles.ctaCmd}> respond --incident INC-001 --severity P1</span>
+          <span className={styles.ctaCmd}>&nbsp;respond --incident INC-001 --severity P1</span>
         </div>
-        <p className={styles.ctaNote}>one incident. no hints. just you and the signals.</p>
-        <button className={styles.btnRespond} onClick={() => navigate('/incidents')}>
-          <span className={styles.btnRespondDot} />
-          start investigation
+        <p className={styles.ctaNote}>One incident. No hints. Just you and the signals.</p>
+        <button className={styles.btnPrimary} onClick={() => navigate('/incidents')}>
+          <span className={styles.btnDot} />
+          Start investigation
         </button>
       </section>
 
       {/* ── Footer ── */}
       <footer className={styles.footer}>
-        <span className={styles.footerLeft}>incident-zero · v1.0.0</span>
-        <span className={styles.footerMid}>Built for SREs, by an SRE.</span>
-        <span className={styles.footerRight}>© 2026</span>
+        <span>incident-zero · v1.0.0</span>
+        <span>Built for SREs, by an SRE.</span>
+        <span>© 2026</span>
       </footer>
+
     </div>
   );
 }
