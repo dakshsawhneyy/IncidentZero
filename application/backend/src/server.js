@@ -21,11 +21,13 @@ app.use(cors({
 app.use(express.json());
 
 // ── DB Pool ─────────────────────────────────────────────────
-// Azure PostgreSQL requires SSL. Set DB_SSL=true in production.
+// Neon Postgres requires SSL. Set DB_SSL=true in production.
+// rejectUnauthorized: false keeps compatibility across providers
+// (Neon, Azure, self-hosted with self-signed certs).
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.DB_SSL === 'true'
-    ? { rejectUnauthorized: false }   // Azure flexible server uses self-signed cert
+    ? { rejectUnauthorized: false }
     : false,
 });
 
