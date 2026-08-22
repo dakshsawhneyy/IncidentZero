@@ -163,30 +163,156 @@ const COMPARE = [
   { them: 'Complete a guided exercise',   us: 'No instructions. Just evidence.' },
 ];
 
-const KUBECTL_OUTPUT = `$ kubectl top pods -n production
-NAME                          CPU     MEMORY
-checkout-api-7d9f8c-xk2pl     42m     180Mi
-redis-cache-0                 180m    7680Mi  <- 7.68 / 8 GB
-payment-api-6b8d4f-hj3kp      28m     145Mi
-postgres-0                    35m     512Mi`;
+/* ── Investigation Timeline — replaces the two plain terminals ── */
 
-const LOG_OUTPUT = `$ kubectl logs checkout-api-7d9f8c-xk2pl --tail=5
-07:12:58 WARN  Redis connection slow — 340ms
-07:13:01 ERROR Redis dial tcp 10.0.1.45:6379: timeout
-07:13:03 WARN  Circuit breaker OPEN for redis-cache
-07:13:13 ERROR All retries exhausted. Request failed.
-07:13:24 WARN  Error rate 18.3% over last 60s`;
+const TIMELINE_STEPS = [
+  {
+    step: 1,
+    tool: 'Metrics',
+    toolColor: 'var(--red-soft)',
+    toolBg: 'var(--red-dim)',
+    toolBorder: 'var(--red-border)',
+    icon: '📊',
+    cmd: 'kubectl top pods -n production',
+    thought: 'P1 firing. Check resource pressure first.',
+    findings: [
+      { text: 'redis-cache-0',      detail: '7680Mi / 8192Mi',  status: 'crit', tag: '96% MEM' },
+      { text: 'checkout-api',       detail: 'P99: 1,247ms',     status: 'crit', tag: 'LATENCY' },
+      { text: 'payment-api',        detail: '145Mi  nominal',   status: 'ok',   tag: 'OK' },
+    ],
+    insight: 'Redis is near OOM. That\'s the blast radius.',
+  },
+  {
+    step: 2,
+    tool: 'Logs',
+    toolColor: 'var(--blue-soft)',
+    toolBg: 'var(--blue-dim)',
+    toolBorder: 'var(--blue-border)',
+    icon: '📋',
+    cmd: 'kubectl logs checkout-api-7d9f8c-xk2pl --tail=20',
+    thought: 'Confirm Redis is causing the checkout failures.',
+    findings: [
+      { text: '07:13:01 ERROR', detail: 'Redis i/o timeout',          status: 'crit', tag: 'TIMEOUT' },
+      { text: '07:13:03 WARN',  detail: 'Circuit breaker OPEN',       status: 'warn', tag: 'CB OPEN' },
+      { text: '07:13:13 ERROR', detail: 'All retries exhausted',      status: 'crit', tag: 'FATAL' },
+    ],
+    insight: 'Circuit breaker opened after Redis timeouts. Chain confirmed.',
+  },
+  {
+    step: 3,
+    tool: 'K8s Events',
+    toolColor: 'var(--yellow)',
+    toolBg: 'var(--yellow-dim)',
+    toolBorder: 'var(--yellow-border)',
+    icon: '⚡',
+    cmd: 'kubectl describe pod redis-cache-0 -n production',
+    thought: 'Why is Redis using that much memory?',
+    findings: [
+      { text: 'OOMKill Warning',  detail: '07:09:14 — 4 min before P1', status: 'warn', tag: 'EARLY' },
+      { text: 'maxmemory-policy', detail: 'noeviction — won\'t evict',  status: 'crit', tag: 'CONFIG' },
+      { text: 'Memory limit',     detail: '8Gi — no headroom left',     status: 'warn', tag: 'LIMIT' },
+    ],
+    insight: 'noeviction policy + no headroom = guaranteed OOM cascade.',
+  },
+];
 
-function CodeBlock({ label, content, accent }) {
+function InvestigationShowcase() {
+  const [activeStep, setActiveStep] = useState(0);
+  const step = TIMELINE_STEPS[activeStep];
+
   return (
-    <div className={styles.codeBlock}>
-      <div className={styles.codeBlockBar}>
-        <span className={styles.cbDot} style={{ background: '#ff5f56' }} />
-        <span className={styles.cbDot} style={{ background: '#ffbd2e' }} />
-        <span className={styles.cbDot} style={{ background: '#27c93f' }} />
-        <span className={styles.cbLabel}>{label}</span>
+    <div className={styles.invShowcase}>
+
+      {/* Step selector tabs */}
+      <div className={styles.invTabs}>
+        {TIMELINE_STEPS.map((s, i) => (
+          <button
+            key={s.step}
+            className={`${styles.invTab} ${activeStep === i ? styles.invTabActive : ''}`}
+            style={activeStep === i ? { borderColor: s.toolBorder, color: s.toolColor } : {}}
+            onClick={() => setActiveStep(i)}
+          >
+            <span className={styles.invTabStep}>STEP {s.step}</span>
+            <span className={styles.invTabTool}
+              style={activeStep === i
+                ? { color: s.toolColor, background: s.toolBg, borderColor: s.toolBorder }
+                : {}}>
+              {s.tool}
+            </span>
+          </button>
+        ))}
+        <div className={styles.invTabsNote}>click a step →</div>
       </div>
-      <pre className={styles.codeBlockBody} style={{ color: accent }}>{content}</pre>
+
+      {/* Terminal window */}
+      <div className={styles.invTerminal}>
+
+        {/* Bar */}
+        <div className={styles.invTermBar}>
+          <div className={styles.panelDots}>
+            <span style={{ background: '#ff5f56' }} />
+            <span style={{ background: '#ffbd2e' }} />
+            <span style={{ background: '#27c93f' }} />
+          </div>
+          <span className={styles.invTermTitle}>oncall@prod:~$</span>
+          <span className={styles.invTermBadge}
+            style={{ color: step.toolColor, background: step.toolBg, borderColor: step.toolBorder }}>
+            {step.tool}
+          </span>
+        </div>
+
+        {/* Thought bubble */}
+        <div className={styles.invThought}>
+          <span className={styles.invThoughtIcon}>💭</span>
+          <span className={styles.invThoughtText}>{step.thought}</span>
+        </div>
+
+        {/* Command line */}
+        <div className={styles.invCmdLine} key={`cmd-${activeStep}`}>
+          <span className={styles.invPrompt}>$</span>
+          <span className={styles.invCmd}>{step.cmd}</span>
+          <span className={styles.invCursor} />
+        </div>
+
+        {/* Findings rows */}
+        <div className={styles.invFindings} key={`findings-${activeStep}`}>
+          {step.findings.map((f, i) => (
+            <div
+              key={i}
+              className={`${styles.invFinding} ${styles[`invF_${f.status}`]}`}
+              style={{ animationDelay: `${i * 80}ms` }}
+            >
+              <span className={styles.invFindingTag}
+                style={
+                  f.status === 'crit' ? { color: 'var(--red-soft)', background: 'var(--red-dim)', borderColor: 'var(--red-border)' } :
+                  f.status === 'warn' ? { color: 'var(--yellow)', background: 'var(--yellow-dim)', borderColor: 'var(--yellow-border)' } :
+                  { color: 'var(--green-soft)', background: 'var(--green-dim)', borderColor: 'var(--green-border)' }
+                }
+              >{f.tag}</span>
+              <span className={styles.invFindingText}>{f.text}</span>
+              <span className={styles.invFindingDetail}>{f.detail}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Insight callout */}
+        <div className={styles.invInsight} key={`insight-${activeStep}`}>
+          <span className={styles.invInsightIcon}>→</span>
+          <span className={styles.invInsightText}>{step.insight}</span>
+        </div>
+
+        {/* Step progress dots */}
+        <div className={styles.invDots}>
+          {TIMELINE_STEPS.map((_, i) => (
+            <span
+              key={i}
+              className={`${styles.invDot} ${activeStep === i ? styles.invDotActive : ''}`}
+              onClick={() => setActiveStep(i)}
+            />
+          ))}
+        </div>
+
+      </div>
     </div>
   );
 }
@@ -302,8 +428,7 @@ export default function Landing() {
             </div>
           </div>
           <div className={styles.previewTerminals}>
-            <CodeBlock label="kubectl top pods" content={KUBECTL_OUTPUT} accent="var(--green-soft)" />
-            <CodeBlock label="kubectl logs checkout-api" content={LOG_OUTPUT} accent="var(--text-code)" />
+            <InvestigationShowcase />
           </div>
         </div>
         <p className={styles.previewNote}>

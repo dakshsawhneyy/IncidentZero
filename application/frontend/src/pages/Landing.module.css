@@ -604,14 +604,7 @@
   color: var(--text-primary);
 }
 
-/* ══ CODE BLOCKS ══ */
-.twoTerminals {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
+/* ══ CODE BLOCKS (kept for potential reuse) ══ */
 .codeBlock {
   background: #080809;
   border: 1px solid var(--border-default);
@@ -697,9 +690,257 @@
 
 .previewTerminals {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 14px;
 }
+
+/* ══ INVESTIGATION SHOWCASE ══ */
+.invShowcase {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Step tabs row */
+.invTabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.invTab {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  text-align: left;
+}
+
+.invTab:hover {
+  background: rgba(255,255,255,0.04);
+}
+
+.invTabActive {
+  background: rgba(255,255,255,0.04);
+}
+
+.invTabStep {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+}
+
+.invTabTool {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  padding: 2px 7px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-subtle);
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.invTabsNote {
+  font-size: 9px;
+  color: var(--text-muted);
+  margin-left: auto;
+  letter-spacing: 0.3px;
+}
+
+/* Terminal window */
+.invTerminal {
+  background: #080809;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-xl);
+}
+
+.invTermBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  background: rgba(255,255,255,0.025);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.invTermTitle {
+  font-size: 11px;
+  color: var(--amber-soft);
+  font-weight: 700;
+  flex: 1;
+}
+
+.invTermBadge {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+  border: 1px solid;
+}
+
+/* Thought bubble */
+.invThought {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 10px 16px;
+  background: rgba(255,255,255,0.015);
+  border-bottom: 1px solid var(--border-subtle);
+  animation: fadeSlideIn 0.2s ease;
+}
+
+.invThoughtIcon {
+  font-size: 13px;
+  flex-shrink: 0;
+  filter: grayscale(0.3);
+}
+
+.invThoughtText {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-style: italic;
+  line-height: 1.5;
+}
+
+/* Command line */
+.invCmdLine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px 6px;
+  animation: fadeSlideIn 0.2s ease;
+}
+
+.invPrompt {
+  color: var(--green-soft);
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.invCmd {
+  font-size: 12px;
+  color: var(--text-primary);
+  letter-spacing: -0.2px;
+}
+
+.invCursor {
+  display: inline-block;
+  width: 7px;
+  height: 13px;
+  background: var(--amber);
+  opacity: 0.85;
+  flex-shrink: 0;
+  animation: blink 1s step-end infinite;
+}
+
+/* Findings list */
+.invFindings {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--border-subtle);
+  margin: 8px 16px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.invFinding {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #080809;
+  font-size: 11px;
+  animation: fadeSlideIn 0.18s ease both;
+}
+
+.invFindingTag {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  border: 1px solid;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.invFindingText {
+  color: var(--text-primary);
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.invFindingDetail {
+  color: var(--text-muted);
+  font-size: 10px;
+  white-space: nowrap;
+  text-align: right;
+}
+
+/* Insight callout */
+.invInsight {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 4px 16px 12px;
+  padding: 10px 14px;
+  background: rgba(245,158,11,0.04);
+  border: 1px solid rgba(245,158,11,0.15);
+  border-radius: var(--radius-xs);
+  animation: fadeSlideIn 0.25s ease;
+}
+
+.invInsightIcon {
+  color: var(--amber);
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.invInsightText {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  font-style: italic;
+}
+
+/* Step dots */
+.invDots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding-bottom: 12px;
+}
+
+.invDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border-default);
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.invDot:hover   { background: var(--text-muted); }
+.invDotActive   { background: var(--amber); transform: scale(1.3); }
 
 /* ══ COMPARE SECTION ══ */
 .compareHeader {
@@ -1047,54 +1288,203 @@
 .footer span:nth-child(2) { text-align: center; }
 .footer span:nth-child(3) { text-align: right; }
 
+/* ══ TOUCH — disable hover-only effects on touch devices ══ */
+@media (hover: none) {
+  .showcaseSlot { transition: none; }
+  .slotA:hover, .slotA:active { transform: translateX(-12px) rotate(-1.2deg); }
+  .slotB:hover, .slotB:active { transform: translateX(14px)  rotate(0.8deg); }
+  .slotC:hover, .slotC:active { transform: translateX(-6px)  rotate(-0.5deg); }
+  .slotA:hover .panel,
+  .slotB:hover .panel,
+  .slotC:hover .panel {
+    border-color: var(--border-default);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.04), var(--shadow-xl);
+    filter: none;
+  }
+  .slotHint { display: none; }
+  .metricTile:hover { background: #0c0c0e; }
+  .rpItem:hover { filter: none; }
+  .invTab:hover { background: var(--bg-card); }
+  .logFilter:hover { background: transparent; color: var(--text-muted); }
+}
+
 /* ══ ANIMATIONS ══ */
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
 @keyframes blink  { 0%, 100% { opacity: 1; } 50% { opacity: 0; }   }
 
 /* ══ RESPONSIVE ══ */
+
+/* ── tablet / small desktop (≤1100px) ── */
 @media (max-width: 1100px) {
-  .hero { grid-template-columns: 1fr; min-height: auto; align-items: start; }
-  .heroCopy  { padding: 52px 32px 44px; border-right: none; border-bottom: 1px solid var(--border-subtle); }
-  .heroVisual { padding: 40px 24px 52px; }
+  .hero {
+    grid-template-columns: 1fr;
+    min-height: auto;
+    align-items: start;
+  }
+  .heroCopy {
+    padding: 52px 32px 44px;
+    border-right: none;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .heroVisual {
+    padding: 40px 24px 52px;
+    overflow: visible; /* prevent tilted panels clipping */
+  }
   .heroHeading { font-size: 40px; }
+
+  /* flatten panel tilts slightly so nothing clips */
   .slotA { transform: translateX(-8px) rotate(-1deg); margin-bottom: -22px; }
   .slotB { transform: translateX(10px) rotate(0.6deg); margin-bottom: -22px; }
   .slotC { transform: translateX(-4px) rotate(-0.4deg); }
+  .slotA:hover { transform: translateX(-8px) translateY(-14px) rotate(-0.3deg) scale(1.025); }
+  .slotB:hover { transform: translateX(10px) translateY(-14px) rotate(0.2deg) scale(1.025); }
+  .slotC:hover { transform: translateX(-4px) translateY(-14px) rotate(-0.1deg) scale(1.025); }
+  .slotA:active { transform: translateX(-8px) translateY(-8px) rotate(-0.3deg) scale(1.015); }
+  .slotB:active { transform: translateX(10px) translateY(-8px) rotate(0.2deg) scale(1.015); }
+  .slotC:active { transform: translateX(-4px) translateY(-8px) rotate(-0.1deg) scale(1.015); }
+
   .scoringInner { grid-template-columns: 1fr; gap: 48px; padding: 0 32px; }
   .previewLayout { grid-template-columns: 1fr; gap: 36px; }
   .previewCopy { position: static; }
   .section { padding: 72px 32px; }
   .divider { padding: 0 32px; }
-  .nav     { padding: 0 28px; }
-  .cta     { padding: 80px 32px; }
+  .nav { padding: 0 28px; }
+  .cta { padding: 80px 32px; }
   .ctaPrompt { white-space: normal; flex-wrap: wrap; justify-content: center; }
-  .footer  { grid-template-columns: 1fr; gap: 6px; padding: 20px 28px; text-align: center; }
+  .footer { grid-template-columns: 1fr; gap: 6px; padding: 20px 28px; text-align: center; }
   .footer span { text-align: center !important; }
   .scoringSection { padding: 72px 0; }
 }
 
+/* ── phablet (≤800px) ── */
 @media (max-width: 800px) {
-  .previewTerminals { grid-template-columns: 1fr; }
-  .metricsGrid  { grid-template-columns: repeat(2, 1fr); }
+  .metricsGrid { grid-template-columns: repeat(2, 1fr); }
+
+  /* inv showcase: command can overflow — wrap it */
+  .invCmd {
+    word-break: break-all;
+    white-space: normal;
+  }
+  .invCmdLine { flex-wrap: wrap; align-items: flex-start; }
+  .invCursor  { margin-top: 3px; }
+
+  /* findings: drop the detail column on narrow screens */
+  .invFinding {
+    grid-template-columns: 60px 1fr;
+    row-gap: 2px;
+  }
+  .invFindingDetail {
+    grid-column: 2;
+    text-align: left;
+    white-space: normal;
+  }
+
+  /* log rows: compress, drop explicit svc column */
+  .logRow {
+    grid-template-columns: 50px 40px 1fr;
+    gap: 4px;
+  }
+  .logSvc { display: none; }
+
+  /* compare table */
+  .compareHead { display: none; }
+  .compareRow  { grid-template-columns: 1fr 28px 1fr; }
+  .compareThemCell { padding: 14px 18px; font-size: 13px; }
+  .compareUsCell   { padding: 14px 18px; font-size: 13px; }
 }
 
+/* ── mobile (≤560px) ── */
 @media (max-width: 560px) {
   .nav { padding: 0 18px; }
-  .heroCopy, .heroVisual { padding-left: 18px; padding-right: 18px; }
-  .heroHeading { font-size: 32px; letter-spacing: -1.2px; }
+
+  /* nav: hide status text on very small screens to prevent overflow */
+  .navStatus { display: none; }
+
+  .heroCopy  { padding: 40px 18px 36px; }
+  .heroVisual { padding: 28px 18px 40px; overflow: visible; }
+  .heroHeading { font-size: 30px; letter-spacing: -1.2px; }
+  .heroBody { font-size: 15px; }
+  .heroBullets li { font-size: 14px; }
+
+  /* showcase: remove tilt entirely, show only A + C */
+  .showcase { padding-top: 28px; }
+  .slotHint { display: none; } /* hide hints on mobile — no hover */
+  .slotB { display: none; }
+  .slotA {
+    transform: translateX(0) rotate(-0.8deg);
+    margin-bottom: -16px;
+  }
+  .slotC {
+    transform: translateX(0) rotate(0.4deg);
+  }
+  /* disable all hover/active transforms on touch */
+  .slotA:hover, .slotA:active { transform: translateX(0) rotate(-0.8deg); }
+  .slotC:hover, .slotC:active { transform: translateX(0) rotate(0.4deg); }
+  .slotA:hover .panel,
+  .slotC:hover .panel { border-color: var(--border-default); box-shadow: 0 0 0 1px rgba(255,255,255,0.04), var(--shadow-xl); }
+
+  /* metrics: 2 cols on mobile (not 3) */
+  .metricsGrid { grid-template-columns: repeat(2, 1fr); }
+  .metricTileValue { font-size: 13px; }
+
+  /* log rows: just level + message */
+  .logRow { grid-template-columns: 42px 1fr; gap: 6px; }
+  .logTime { display: none; }
+  .logSvc  { display: none; }
+
+  /* report items: prevent overflow */
+  .rpItem { flex-wrap: wrap; }
+  .rpScoreNum { font-size: 28px; }
+
   .section, .cta { padding-left: 18px; padding-right: 18px; }
   .scoringInner { padding: 0 18px; }
-  .sectionTitle  { font-size: 28px; }
-  .btnPrimary    { width: 100%; justify-content: center; align-self: stretch; }
-  .compareRow    { grid-template-columns: 1fr; }
-  .compareThemCell { border-right: none; padding: 14px 18px 4px; }
-  .compareArrow { border-right: none; border-bottom: none; padding: 2px 18px; text-align: left; }
-  .compareUsCell { padding: 4px 18px 14px; background: transparent; border-bottom: 1px solid var(--border-subtle); }
+  .sectionTitle { font-size: 26px; }
+  .btnPrimary   { width: 100%; justify-content: center; align-self: stretch; }
+
+  /* compare: stack vertically */
+  .compareRow { grid-template-columns: 1fr; }
+  .compareThemCell { border-right: none; padding: 14px 18px 4px; font-size: 13px; }
+  .compareArrow { border-right: none; border-bottom: none; padding: 2px 18px; text-align: left; font-size: 14px; }
+  .compareUsCell { padding: 4px 18px 14px; background: transparent; border-bottom: 1px solid var(--border-subtle); font-size: 13px; }
   .compareRow:last-child .compareUsCell { border-bottom: none; }
+  .compareHead { display: none; }
+
+  /* investigation showcase */
+  .invTabs { gap: 6px; }
+  .invTabsNote { display: none; } /* "click a step →" is obvious, drop it */
+  .invTab { padding: 6px 10px; }
+  .invTabStep { font-size: 7px; }
+  .invTabTool { font-size: 9px; }
+  .invCmd { font-size: 10px; word-break: break-all; white-space: normal; }
+  .invCmdLine { flex-wrap: wrap; align-items: flex-start; gap: 6px; padding: 8px 14px 4px; }
+  .invFinding { grid-template-columns: 58px 1fr; row-gap: 2px; }
+  .invFindingDetail { grid-column: 2; text-align: left; white-space: normal; font-size: 9px; }
+  .invInsightText { font-size: 10px; }
+  .invThoughtText { font-size: 10px; }
+
+  /* scoring cards: reduce padding */
+  .scoreExItems { padding: 4px 12px 8px; }
+  .scoreExHeader { padding: 10px 12px 6px; }
+  .scoreExBar { margin: 0 12px 8px; }
+  .scoreExGrade { margin: 0 12px 8px; }
+  .scoreExLesson { margin: 4px 12px 12px; }
+  .scoreExScore { font-size: 22px; }
+
+  /* CTA */
+  .cta { padding: 64px 18px; }
+  .ctaPrompt { padding: 12px 16px; font-size: 12px; }
+
   .divider { padding: 0 18px; }
   .footer  { padding: 18px; }
-  .slotB   { display: none; }
-  .slotA   { transform: translateX(0) rotate(-1deg); margin-bottom: -18px; }
-  .slotC   { transform: translateX(0) rotate(0.5deg); }
-  .metricsGrid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ── very small (≤380px) ── */
+@media (max-width: 380px) {
+  .heroHeading { font-size: 26px; }
+  .sectionTitle { font-size: 22px; }
+  .navLogo { font-size: 13px; }
+  .invTab { padding: 5px 8px; }
+  .metricsGrid { grid-template-columns: repeat(2, 1fr); }
+  .metricTileValue { font-size: 12px; }
+  .rpScoreNum { font-size: 24px; }
 }
