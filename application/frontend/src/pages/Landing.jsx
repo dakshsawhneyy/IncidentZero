@@ -344,7 +344,6 @@ export default function Landing() {
 
   function handleStart() {
     if (active) sessionStorage.setItem('selectedIncidentId', active.rawId);
-    sessionStorage.setItem('incidentStart', Date.now().toString());
     navigate('/incident');
   }
 
@@ -359,7 +358,7 @@ export default function Landing() {
             <span className={styles.navPulse} />
             {incidents.length > 0
               ? `${incidents.length} incident${incidents.length === 1 ? '' : 's'} active`
-              : 'loading…'}
+              : 'connecting…'}
           </div>
           <span className={styles.navChip}>BETA</span>
         </div>

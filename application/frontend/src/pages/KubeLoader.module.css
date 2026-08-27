@@ -1,0 +1,186 @@
+/* ══ KubeLoader — shared K8s terminal loading overlay ══ */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--bg-void);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: klFadeIn 0.3s ease;
+}
+
+@keyframes klFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.box {
+  width: 100%;
+  max-width: 580px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.03),
+    0 0 60px rgba(239,68,68,0.08),
+    var(--shadow-xl);
+}
+
+/* ── Chrome bar ── */
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  background: rgba(255,255,255,0.025);
+  border-bottom: 1px solid var(--border-subtle);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.dots {
+  display: flex;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.dots span {
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.title {
+  flex: 1;
+  font-size: 11px;
+  color: var(--amber-soft);
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.badge {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--green-soft);
+  background: var(--green-dim);
+  border: 1px solid var(--green-border);
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+  animation: klPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes klPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
+
+/* ── Terminal body ── */
+.term {
+  background: #080809;
+  padding: 18px 20px 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px;
+  line-height: 1.85;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* scanline */
+.term::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0,0,0,0.04) 3px,
+    rgba(0,0,0,0.04) 4px
+  );
+  pointer-events: none;
+}
+
+/* ── Line types ── */
+.line     { white-space: pre; line-height: 1.75; animation: klSlideIn 0.12s ease; }
+.t_sys    { color: var(--text-primary); font-weight: 700; font-size: 13px; }
+.t_cmd    { color: var(--text-primary); }
+.t_ok     { color: var(--text-tertiary); }
+.t_warn   { color: var(--yellow); }
+.t_crit   { color: var(--red-soft); font-weight: 600; }
+.t_alert  { color: var(--red-soft); font-weight: 700; text-shadow: 0 0 10px rgba(239,68,68,0.5); }
+.t_muted  { color: var(--text-muted); }
+.t_div    { line-height: 1.2; }
+.divider  { color: var(--border-default); }
+
+@keyframes klSlideIn {
+  from { opacity: 0; transform: translateY(-3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.prompt { color: var(--green-soft); font-weight: 700; }
+
+/* Inline typing cursor */
+.inlineCursor {
+  display: inline-block;
+  width: 7px;
+  height: 13px;
+  background: var(--text-primary);
+  opacity: 0.8;
+  margin-left: 1px;
+  vertical-align: text-bottom;
+  animation: klBlink 0.7s step-end infinite;
+}
+
+/* Waiting line */
+.waitLine {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.waitText { color: var(--amber-soft); min-width: 200px; }
+
+/* Block cursor */
+.blockCursor {
+  display: inline-block;
+  width: 8px;
+  height: 15px;
+  background: var(--amber);
+  opacity: 0.9;
+  flex-shrink: 0;
+  animation: klBlink 1s step-end infinite;
+}
+
+@keyframes klBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+/* ── Sweep bar ── */
+.sweepWrap {
+  height: 2px;
+  background: rgba(255,255,255,0.04);
+  overflow: hidden;
+}
+
+.sweepBar {
+  height: 100%;
+  width: 35%;
+  background: linear-gradient(90deg, transparent, var(--amber), var(--red-soft), transparent);
+  animation: klSweep 1.6s ease-in-out infinite;
+}
+
+@keyframes klSweep {
+  0%   { transform: translateX(-200%); }
+  100% { transform: translateX(450%); }
+}
+
+/* ── Mobile ── */
+@media (max-width: 560px) {
+  .term  { font-size: 11px; padding: 14px; min-height: 220px; }
+  .title { font-size: 10px; }
+}

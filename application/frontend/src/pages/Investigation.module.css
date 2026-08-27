@@ -1152,37 +1152,267 @@
   to   { opacity: 1; }
 }
 
+/* ── Investigation Loader overlay ── */
+.invLoader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--bg-void);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fadeIn 0.3s ease;
+}
+
+.invLoaderBox {
+  width: 100%;
+  max-width: 580px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.03),
+    0 0 60px rgba(239,68,68,0.08),
+    var(--shadow-xl);
+}
+
+/* chrome bar */
+.invLoaderBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  background: rgba(255,255,255,0.025);
+  border-bottom: 1px solid var(--border-subtle);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.invLoaderDots {
+  display: flex;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.invLoaderDots span {
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.invLoaderTitle {
+  flex: 1;
+  font-size: 11px;
+  color: var(--amber-soft);
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.invLoaderBadge {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--green-soft);
+  background: var(--green-dim);
+  border: 1px solid var(--green-border);
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+/* terminal body */
+.invLoaderTerm {
+  background: #080809;
+  padding: 18px 20px 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px;
+  line-height: 1.85;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* scanline */
+.invLoaderTerm::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0,0,0,0.04) 3px,
+    rgba(0,0,0,0.04) 4px
+  );
+  pointer-events: none;
+}
+
+/* line types */
+.invLdrLine      { white-space: pre; line-height: 1.75; animation: fadeIn 0.12s ease; }
+.invLdr_sys      { color: var(--text-primary); font-weight: 700; font-size: 13px; }
+.invLdr_cmd      { color: var(--text-primary); }
+.invLdr_ok       { color: var(--text-tertiary); }
+.invLdr_warn     { color: var(--yellow); }
+.invLdr_crit     { color: var(--red-soft); font-weight: 600; }
+.invLdr_alert    { color: var(--red-soft); font-weight: 700; text-shadow: 0 0 10px rgba(239,68,68,0.5); }
+.invLdr_muted    { color: var(--text-muted); }
+.invLdr_div      { line-height: 1.2; }
+.invLdrDiv       { color: var(--border-default); }
+
+.invLdrPrompt    { color: var(--green-soft); font-weight: 700; }
+
+/* inline typing cursor */
+.invLdrCursor {
+  display: inline-block;
+  width: 7px;
+  height: 13px;
+  background: var(--text-primary);
+  opacity: 0.8;
+  margin-left: 1px;
+  vertical-align: text-bottom;
+  animation: blink 0.7s step-end infinite;
+}
+
+/* waiting line */
+.invLdrWait {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  animation: fadeIn 0.15s ease;
+}
+.invLdrWaitText    { color: var(--amber-soft); min-width: 200px; }
+.invLdrBlockCursor {
+  display: inline-block;
+  width: 8px;
+  height: 15px;
+  background: var(--amber);
+  opacity: 0.9;
+  flex-shrink: 0;
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+/* sweep bar */
+.invLoaderSweep {
+  height: 2px;
+  background: rgba(255,255,255,0.04);
+  overflow: hidden;
+}
+.invLoaderSweepBar {
+  height: 100%;
+  width: 35%;
+  background: linear-gradient(90deg, transparent, var(--amber), var(--red-soft), transparent);
+  animation: invSweep 1.6s ease-in-out infinite;
+}
+@keyframes invSweep {
+  0%   { transform: translateX(-200%); }
+  100% { transform: translateX(450%); }
+}
+
+/* mobile */
+@media (max-width: 560px) {
+  .invLoaderTerm { font-size: 11px; padding: 14px; min-height: 220px; }
+  .invLoaderTitle { font-size: 10px; }
+}
+
 /* ── Responsive ── */
+
+/* Split-screen / narrow desktop fix — everything must stay in one row */
+.topbar {
+  /* prevent any child from stretching past the viewport */
+  overflow: hidden;
+}
+
+.topbarLeft  { flex-shrink: 0; min-width: 0; }
+.topbarRight { flex-shrink: 0; min-width: 0; }
+
+.incidentTag {
+  /* allow it to shrink and truncate instead of pushing siblings off-screen */
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.incidentTitle {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  /* at very narrow widths hide the title entirely so only ID + severity show */
+}
+
+/* hide title text below 600px so topbar stays single-row */
+@media (max-width: 600px) {
+  .incidentSep,
+  .incidentTitle { display: none; }
+  .severity { font-size: 9px; padding: 2px 7px; }
+  .timerValue { font-size: 11px; }
+  .abandonBtn { font-size: 10px; padding: 4px 8px; }
+}
+
 @media (max-width: 1024px) {
   .content { flex-direction: column; overflow: auto; }
   .sidebar {
     width: 100%;
+    flex-shrink: 0;
     border-right: none;
     border-bottom: 1px solid var(--border-subtle);
+    overflow: visible;
   }
   .sidebarSection {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 4px;
-    padding: 10px 12px;
+    padding: 8px 12px;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .sidebarSection::-webkit-scrollbar { display: none; }
+  .sidebarSectionLabel { display: none; }
+  /* tab pills in horizontal strip */
+  .sidebarItem {
+    flex: 0 0 auto;
+    margin-bottom: 0;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-subtle);
+    padding: 6px 12px;
+    white-space: nowrap;
+  }
+  .sidebarActive {
+    border-left-width: 1px !important;
+    padding-left: 12px !important;
+    border-color: var(--amber-border) !important;
+  }
+  .sidebarBottom {
+    border-top: none;
+    padding: 8px 12px 10px;
     width: 100%;
   }
-  .sidebarSectionLabel { width: 100%; }
-  .sidebarItem { flex: 1 1 130px; min-width: 130px; margin-bottom: 0; }
-  .sidebarBottom { border-top: none; padding: 10px 12px 12px; width: 100%; }
+  .incidentSummary { display: flex; flex-direction: row; align-items: center; gap: 12px; }
+  .summaryDesc, .summaryTime { display: none; }
 }
 
 @media (max-width: 768px) {
-  .topbar       { padding: 8px 12px; flex-wrap: wrap; justify-content: center; }
-  .topbarLeft,
-  .topbarRight  { width: 100%; justify-content: center; }
-  .incidentTag  { order: 3; width: 100%; justify-content: center; }
-  .panelBody    { padding: 14px; }
-  .terminal     { min-height: 320px; }
-  .metricsGrid  { grid-template-columns: 1fr; }
-  .logRow       { grid-template-columns: 56px 40px 1fr; }
-  .logMsg       { grid-column: 1 / -1; margin-top: 2px; }
+  .panelBody    { padding: 12px; }
+  .terminal     { min-height: 280px; }
+  .metricsGrid  { grid-template-columns: 1fr 1fr; }
+  .logRow       { grid-template-columns: 50px 38px 1fr; }
+  .logService   { display: none; }
+  .logMsg       { grid-column: 3; }
   .rcaHeader    { flex-direction: column; align-items: flex-start; gap: 8px; }
   .modalBackdrop { padding: 12px; }
+  .modalMeta    { grid-template-columns: 1fr; }
   .abandonModalActions { flex-direction: column; }
+}
+
+@media (max-width: 480px) {
+  .metricsGrid  { grid-template-columns: 1fr; }
+  .logRow       { grid-template-columns: 44px 1fr; }
+  .logTime      { display: none; }
 }

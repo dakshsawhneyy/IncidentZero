@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './IncidentBrief.module.css';
+import KubeLoader from './KubeLoader';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -38,13 +39,106 @@ function Logo({ onClick }) {
   );
 }
 
+/* ── Blast radius ticker — live escalating counters ── */
+const BLAST_METRICS = [
+  {
+    label: 'Failed transactions',
+    start: 2400,
+    perTick: () => Math.floor(Math.random() * 18) + 8,
+    color: 'var(--red-soft)',
+    bg: 'var(--red-dim)',
+    border: 'var(--red-border)',
+    prefix: '',
+    suffix: '',
+  },
+  {
+    label: 'Users affected',
+    start: 1180,
+    perTick: () => Math.floor(Math.random() * 12) + 4,
+    color: 'var(--orange)',
+    bg: 'var(--orange-dim)',
+    border: 'var(--orange-border)',
+    prefix: '~',
+    suffix: '',
+  },
+  {
+    label: 'Error rate',
+    start: 183,   // stored as tenths: 18.3%
+    perTick: () => Math.floor(Math.random() * 3) + 1,
+    color: 'var(--yellow)',
+    bg: 'var(--yellow-dim)',
+    border: 'var(--yellow-border)',
+    prefix: '',
+    suffix: '%',
+    format: v => (v / 10).toFixed(1),
+  },
+  {
+    label: 'P99 latency',
+    start: 1247,
+    perTick: () => Math.floor(Math.random() * 40) + 10,
+    color: 'var(--red-soft)',
+    bg: 'var(--red-dim)',
+    border: 'var(--red-border)',
+    prefix: '',
+    suffix: 'ms',
+  },
+];
+
+function BlastRadius() {
+  const [values, setValues] = useState(BLAST_METRICS.map(m => m.start));
+  const [flash,  setFlash]  = useState(Array(BLAST_METRICS.length).fill(false));
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setValues(prev => prev.map((v, i) => v + BLAST_METRICS[i].perTick()));
+      // flash a random metric each tick for urgency
+      const pick = Math.floor(Math.random() * BLAST_METRICS.length);
+      setFlash(prev => prev.map((_, i) => i === pick));
+      setTimeout(() => setFlash(Array(BLAST_METRICS.length).fill(false)), 300);
+    }, 1400);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <div className={styles.blastWrap}>
+      {/* Header row */}
+      <div className={styles.blastHeader}>
+        <span className={styles.blastPulse} />
+        <span className={styles.blastTitle}>BLAST RADIUS — LIVE</span>
+        <span className={styles.blastSub}>escalating every second you wait</span>
+      </div>
+
+      {/* Metric tiles */}
+      <div className={styles.blastGrid}>
+        {BLAST_METRICS.map((m, i) => {
+          const raw = values[i];
+          const display = m.format ? m.format(raw) : raw.toLocaleString();
+          return (
+            <div
+              key={m.label}
+              className={`${styles.blastTile} ${flash[i] ? styles.blastTileFlash : ''}`}
+              style={{ borderColor: m.border }}
+            >
+              <span className={styles.blastTileValue} style={{ color: m.color }}>
+                {m.prefix}{display}{m.suffix}
+              </span>
+              <span className={styles.blastTileLabel}>{m.label}</span>
+              <span className={styles.blastTileTrend} style={{ color: m.color }}>↑</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function IncidentBrief() {
   const navigate = useNavigate();
   const [revealed,   setRevealed]   = useState(false);
   const [now,        setNow]        = useState(new Date());
   const [lockedTool, setLockedTool] = useState(null);
-  const [incidents,  setIncidents]  = useState([]);
   const [incident,   setIncident]   = useState(null);
+  const [incidentLoading, setIncidentLoading] = useState(true);
   const [incidentError, setIncidentError] = useState('');
   const [selectedId, setSelectedId] = useState(() => {
     const s = Number(sessionStorage.getItem('selectedIncidentId'));
@@ -60,19 +154,36 @@ export default function IncidentBrief() {
   }, []);
 
   useEffect(() => {
-    fetch(`${API_BASE}/incidents`)
-      .then(r => r.json())
-      .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
-          setIncidents(data);
-          const chosen = data.find(i => i.rawId === selectedId) || data[0];
-          setSelectedId(chosen.rawId);
-          setIncident(chosen);
-        } else {
-          setIncidentError('No incident available.');
-        }
-      })
-      .catch(() => setIncidentError('Unable to load incident data.'));
+    let cancelled = false;
+    let retryTimer = null;
+
+    function doFetch() {
+      fetch(`${API_BASE}/incidents`)
+        .then(r => r.json())
+        .then(data => {
+          if (cancelled) return;
+          if (Array.isArray(data) && data.length > 0) {
+            const storedId = Number(sessionStorage.getItem('selectedIncidentId'));
+            const chosen = data.find(i => Number(i.rawId) === storedId) || data[0];
+            setSelectedId(Number(chosen.rawId));
+            setIncident(chosen);
+            setIncidentLoading(false);
+          } else {
+            // Empty response — retry in 3s
+            if (!cancelled) retryTimer = setTimeout(doFetch, 3000);
+          }
+        })
+        .catch(() => {
+          // Network error — retry in 3s, keep loader showing
+          if (!cancelled) retryTimer = setTimeout(doFetch, 3000);
+        });
+    }
+
+    doFetch();
+    return () => {
+      cancelled = true;
+      clearTimeout(retryTimer);
+    };
   }, []);
 
   const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -87,18 +198,11 @@ export default function IncidentBrief() {
     navigate('/investigate');
   }
 
-  function selectIncident(item) {
-    setIncident(item);
-    setSelectedId(item.rawId);
-    sessionStorage.setItem('selectedIncidentId', item.rawId);
-  }
-
-  const relatedIncidents = incidents
-    .filter(i => i.rawId !== incident?.rawId)
-    .slice(0, 3);
-
   return (
     <div className={styles.page}>
+
+      {/* K8s terminal overlay — shown until incident data loads */}
+      {incidentLoading && <KubeLoader />}
 
       {/* ── Topbar ── */}
       <header className={styles.topbar}>
@@ -114,25 +218,8 @@ export default function IncidentBrief() {
       {/* ── Main ── */}
       <div className={`${styles.main} ${revealed ? styles.visible : ''}`}>
 
-        {/* Related incidents shelf */}
-        {relatedIncidents.length > 0 && (
-          <div className={styles.shelf}>
-            {relatedIncidents.map(item => (
-              <button
-                key={item.rawId}
-                className={`${styles.shelfCard} ${incident?.rawId === item.rawId ? styles.shelfActive : ''}`}
-                onClick={() => selectIncident(item)}
-              >
-                <div className={styles.shelfTop}>
-                  <span className={styles.shelfId}>{item.id}</span>
-                  <span className={styles.shelfSev}>{item.severityLabel || item.severity}</span>
-                </div>
-                <div className={styles.shelfTitle}>{item.title}</div>
-                <div className={styles.shelfMeta}>{item.service} · {item.team}</div>
-              </button>
-            ))}
-          </div>
-        )}
+        {/* Blast radius ticker */}
+        <BlastRadius />
 
         {/* ── Alert card ── */}
         <div className={styles.alertCard}>

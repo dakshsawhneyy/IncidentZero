@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Investigation.module.css';
+import KubeLoader from './KubeLoader';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -319,6 +320,7 @@ export default function Investigation() {
     return Number.isInteger(stored) && stored > 0 ? stored : null;
   });
   const [incident, setIncident] = useState(null);
+  const [incidentLoading, setIncidentLoading] = useState(true);
   const [logs, setLogs] = useState([]);
   const [metrics, setMetrics] = useState([]);
   const [events, setEvents] = useState([]);
@@ -366,18 +368,36 @@ export default function Investigation() {
   }, []);
 
   useEffect(() => {
-    fetch(`${API_BASE}/incidents`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setIncidents(data);
-          const chosen = data.find(item => item.rawId === selectedIncidentId) || data[0];
-          setSelectedIncidentId(chosen.rawId);
-          setIncident(chosen);
-          sessionStorage.setItem('selectedIncidentId', chosen.rawId);
-        }
-      })
-      .catch(() => {});
+    let cancelled = false;
+    let retryTimer = null;
+
+    function doFetch() {
+      fetch(`${API_BASE}/incidents`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (cancelled) return;
+          if (Array.isArray(data) && data.length > 0) {
+            setIncidents(data);
+            const chosen = data.find(item => item.rawId === selectedIncidentId) || data[0];
+            setSelectedIncidentId(chosen.rawId);
+            setIncident(chosen);
+            sessionStorage.setItem('selectedIncidentId', chosen.rawId);
+            // incidentLoading stays true until 4 data fetches below complete
+          } else {
+            // retry in 3s
+            if (!cancelled) retryTimer = setTimeout(doFetch, 3000);
+          }
+        })
+        .catch(() => {
+          if (!cancelled) retryTimer = setTimeout(doFetch, 3000);
+        });
+    }
+
+    doFetch();
+    return () => {
+      cancelled = true;
+      clearTimeout(retryTimer);
+    };
   }, []);
 
   useEffect(() => {
@@ -408,7 +428,8 @@ export default function Investigation() {
         setMetrics([]);
         setEvents([]);
         setTerminalResponses({});
-      });
+      })
+      .finally(() => setIncidentLoading(false));
   }, [incident?.rawId]);
 
   useEffect(() => {
@@ -463,6 +484,9 @@ export default function Investigation() {
 
   return (
     <div className={styles.workspace}>
+      {/* K8s loading overlay — shown until all incident data arrives */}
+      {incidentLoading && <KubeLoader />}
+
       {/* Top bar */}
       <div className={styles.topbar}>
         <div className={styles.topbarLeft}>

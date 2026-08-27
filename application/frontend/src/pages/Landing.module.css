@@ -1288,6 +1288,215 @@
 .footer span:nth-child(2) { text-align: center; }
 .footer span:nth-child(3) { text-align: right; }
 
+/* ══ BOOT OVERLAY ══ */
+.bootOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--bg-void);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: bootFadeIn 0.4s ease;
+}
+
+@keyframes bootFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* full-screen red flash when P1 alert fires */
+.bootAlertFlash {
+  position: absolute;
+  inset: 0;
+  background: rgba(239, 68, 68, 0.06);
+  pointer-events: none;
+  animation: alertPulse 1.6s ease-in-out infinite;
+  z-index: 0;
+}
+
+@keyframes alertPulse {
+  0%, 100% { opacity: 0;   }
+  50%       { opacity: 1;   }
+}
+
+.bootBox {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.04),
+    0 0 80px rgba(239, 68, 68, 0.07),
+    var(--shadow-xl);
+}
+
+/* window chrome bar */
+.bootHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  background: rgba(255,255,255,0.025);
+  border-bottom: 1px solid var(--border-subtle);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.bootHeaderDots {
+  display: flex;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.bootHeaderDots span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: block;
+}
+
+.bootHeaderTitle {
+  font-size: 11px;
+  color: var(--text-muted);
+  flex: 1;
+  letter-spacing: 0.3px;
+}
+
+.bootHeaderAlert {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--red-soft);
+  background: var(--red-dim);
+  border: 1px solid var(--red-border);
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+/* terminal body */
+.bootTerminal {
+  background: #080809;
+  padding: 18px 20px 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px;
+  line-height: 1.85;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* scanline overlay */
+.bootTerminal::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0, 0, 0, 0.04) 3px,
+    rgba(0, 0, 0, 0.04) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* individual lines */
+.bootLine {
+  animation: fadeSlideIn 0.15s ease;
+  white-space: pre;
+  line-height: 1.75;
+}
+
+.bl_sys   { color: var(--text-primary); font-weight: 700; font-size: 13px; }
+.bl_cmd   { color: var(--text-primary); }
+.bl_ok    { color: var(--text-tertiary); }
+.bl_warn  { color: var(--yellow); }
+.bl_crit  { color: var(--red-soft); font-weight: 600; }
+.bl_alert {
+  color: var(--red-soft);
+  font-weight: 700;
+  text-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
+  animation: fadeSlideIn 0.15s ease;
+}
+.bl_muted { color: var(--text-muted); }
+.bl_div   { line-height: 1.2; }
+
+.bootDivLine { color: var(--border-default); }
+
+/* $ prompt sign */
+.bootPromptSign {
+  color: var(--green-soft);
+  font-weight: 700;
+}
+
+/* inline cursor while typing */
+.bootInlineCursor {
+  display: inline-block;
+  width: 7px;
+  height: 13px;
+  background: var(--text-primary);
+  opacity: 0.8;
+  margin-left: 1px;
+  vertical-align: text-bottom;
+  animation: blink 0.7s step-end infinite;
+}
+
+/* final waiting line */
+.bootWaitLine {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  animation: fadeSlideIn 0.15s ease;
+}
+
+.bootWaitText {
+  color: var(--amber-soft);
+  min-width: 220px;
+}
+
+/* block cursor */
+.bootCursor {
+  display: inline-block;
+  width: 8px;
+  height: 15px;
+  background: var(--amber);
+  opacity: 0.9;
+  flex-shrink: 0;
+  animation: blink 1s step-end infinite;
+}
+
+/* amber sweep progress bar */
+.bootProgressWrap {
+  height: 2px;
+  background: rgba(255,255,255,0.04);
+  overflow: hidden;
+}
+
+.bootProgressBar {
+  height: 100%;
+  width: 35%;
+  background: linear-gradient(90deg, transparent, var(--amber), var(--red-soft), transparent);
+  animation: bootScan 1.6s ease-in-out infinite;
+}
+
+@keyframes bootScan {
+  0%   { transform: translateX(-200%); }
+  100% { transform: translateX(450%); }
+}
+
 /* ══ TOUCH — disable hover-only effects on touch devices ══ */
 @media (hover: none) {
   .showcaseSlot { transition: none; }
