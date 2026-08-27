@@ -20,15 +20,21 @@ export function NavLogo({ onClick }) {
   );
 }
 
-/* ── CSS-only live UI panels — no images needed ── */
+/* ── Interactive CSS-only live UI panels ── */
 
 const METRIC_PANELS = [
-  { label: 'P99 Latency',  value: '1,247ms', sub: '↑ from 80ms',  status: 'crit', w: 88 },
-  { label: 'Error Rate',   value: '18.3%',   sub: '↑ from 0.1%',  status: 'crit', w: 72 },
-  { label: 'Redis Memory', value: '7.68 GB', sub: '96% of limit',  status: 'warn', w: 96 },
-  { label: 'Request Rate', value: '2,841/s', sub: '↓ from 4,200',  status: 'warn', w: 58 },
-  { label: 'CPU',          value: '42m',     sub: 'nominal',        status: 'ok',   w: 18 },
-  { label: 'Pod Restarts', value: '0',       sub: 'healthy',        status: 'ok',   w: 2  },
+  { label: 'P99 Latency',  value: '1,247ms', sub: '↑ from 80ms',  status: 'crit', w: 88,
+    detail: 'Spiked at 07:13:01. Correlates with Redis timeout. Baseline: 80ms.' },
+  { label: 'Error Rate',   value: '18.3%',   sub: '↑ from 0.1%',  status: 'crit', w: 72,
+    detail: '18.3% of checkout requests failing. SLO target: 0.5%. Active breach.' },
+  { label: 'Redis Memory', value: '7.68 GB', sub: '96% of limit',  status: 'warn', w: 96,
+    detail: '96% of 8 GB limit. OOM eviction imminent. maxmemory-policy: noeviction.' },
+  { label: 'Request Rate', value: '2,841/s', sub: '↓ from 4,200',  status: 'warn', w: 58,
+    detail: 'Traffic down 32% — circuit breaker is shedding load upstream.' },
+  { label: 'CPU',          value: '42m',     sub: 'nominal',        status: 'ok',   w: 18,
+    detail: 'CPU nominal across all pods. Not the bottleneck here.' },
+  { label: 'Pod Restarts', value: '0',       sub: 'healthy',        status: 'ok',   w: 2,
+    detail: 'No CrashLoopBackOff. This is a dependency issue, not a crash.' },
 ];
 
 const LOG_ROWS = [
@@ -37,6 +43,17 @@ const LOG_ROWS = [
   { t: '07:13:03', l: 'WARN',  svc: 'checkout', msg: 'Circuit breaker OPEN for redis',    cls: 'w' },
   { t: '07:13:13', l: 'ERROR', svc: 'checkout', msg: 'All retries exhausted',             cls: 'e' },
   { t: '07:13:24', l: 'ERROR', svc: 'checkout', msg: 'Error rate 18.3% over 60s',         cls: 'e' },
+];
+
+const REPORT_ITEMS = [
+  { ok: true,  t: 'Identified Redis as root cause',
+    detail: 'Redis memory at 96% caused i/o timeouts, cascading into checkout failures.' },
+  { ok: true,  t: 'Checked kubectl top pods',
+    detail: 'Good first move. redis-cache-0 showed 7.68 GB / 8 GB — the smoking gun.' },
+  { ok: false, t: 'Skipped Kubernetes Events',
+    detail: 'Events had OOMKilled warnings 4 min earlier. Would have confirmed the cause faster.' },
+  { ok: false, t: 'Restarted before diagnosing',
+    detail: 'Pod restart masked the issue temporarily — memory refills within minutes.' },
 ];
 
 function PanelChrome({ title, badge, badgeStyle, children }) {
@@ -56,92 +73,140 @@ function PanelChrome({ title, badge, badgeStyle, children }) {
   );
 }
 
+function ShowcaseMetrics() {
+  const [activeIdx, setActiveIdx] = useState(null);
+  return (
+    <PanelChrome
+      title="Metrics — production"
+      badge="P1 · Critical"
+      badgeStyle={{ color: 'var(--red-soft)', background: 'var(--red-dim)', borderColor: 'var(--red-border)' }}
+    >
+      <div className={styles.metricsGrid}>
+        {METRIC_PANELS.map((m, i) => (
+          <div
+            key={m.label}
+            className={`${styles.metricTile} ${styles[`mt_${m.status}`]} ${activeIdx === i ? styles.metricTileOpen : ''}`}
+            onClick={() => setActiveIdx(activeIdx === i ? null : i)}
+          >
+            <div className={styles.metricTileBar} style={{ width: `${m.w}%` }} />
+            <span className={styles.metricTileLabel}>{m.label}</span>
+            <span className={styles.metricTileValue}>{m.value}</span>
+            <span className={styles.metricTileSub}>{m.sub}</span>
+            {activeIdx === i && (
+              <span className={styles.metricTileDetail}>{m.detail}</span>
+            )}
+          </div>
+        ))}
+      </div>
+    </PanelChrome>
+  );
+}
+
+function ShowcaseLogs() {
+  const [filter, setFilter] = useState('ALL');
+  const LOG_FILTERS = ['ALL', 'ERROR', 'WARN', 'INFO'];
+  const visible = LOG_ROWS.filter(r => {
+    if (filter === 'ALL')   return true;
+    if (filter === 'ERROR') return r.cls === 'e';
+    if (filter === 'WARN')  return r.cls === 'w';
+    return false;
+  });
+  return (
+    <PanelChrome
+      title="Logs — all services"
+      badge={`${LOG_ROWS.filter(r => r.cls === 'e').length} errors`}
+      badgeStyle={{ color: 'var(--red-soft)', background: 'var(--red-dim)', borderColor: 'var(--red-border)' }}
+    >
+      <div className={styles.logTable}>
+        <div className={styles.logFilters}>
+          {LOG_FILTERS.map(f => (
+            <button
+              key={f}
+              data-f={f}
+              className={`${styles.logFilter} ${filter === f ? styles.logFilterActive : ''}`}
+              onClick={() => setFilter(f)}
+            >
+              {f}
+            </button>
+          ))}
+          <span className={styles.logCount}>{visible.length} lines</span>
+        </div>
+        <div className={styles.logBody}>
+          {visible.length === 0 ? (
+            <div className={styles.logEmpty}>No {filter} entries</div>
+          ) : visible.map((r, i) => (
+            <div key={i} className={`${styles.logRow} ${r.cls === 'e' ? styles.logRowError : styles.logRowWarn}`}>
+              <span className={styles.logTime}>{r.t}</span>
+              <span className={styles.logLevel}>{r.l}</span>
+              <span className={styles.logSvc}>{r.svc}</span>
+              <span className={styles.logMsg}>{r.msg}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </PanelChrome>
+  );
+}
+
+function ShowcaseReport() {
+  const [activeIdx, setActiveIdx] = useState(null);
+  return (
+    <PanelChrome
+      title="Post-incident Report"
+      badge="INC-001"
+      badgeStyle={{ color: 'var(--amber)', background: 'var(--amber-dim)', borderColor: 'var(--amber-border)' }}
+    >
+      <div className={styles.reportPreview}>
+        <div className={styles.rpScoreRow}>
+          <div className={styles.rpScore}>
+            <span className={styles.rpScoreNum}>72</span>
+            <span className={styles.rpScoreMax}>/100</span>
+          </div>
+          <div className={styles.rpGrade}>Developing</div>
+        </div>
+        <div className={styles.rpBar}>
+          <div className={styles.rpBarFill} style={{ width: '72%' }} />
+        </div>
+        <div className={styles.rpItems}>
+          {REPORT_ITEMS.map((it, i) => (
+            <div
+              key={i}
+              className={`${styles.rpItem} ${it.ok ? styles.rpItemOk : styles.rpItemFail} ${activeIdx === i ? styles.rpItemOpen : ''}`}
+              onClick={() => setActiveIdx(activeIdx === i ? null : i)}
+            >
+              <span className={styles.rpItemIcon}>{it.ok ? '✓' : '✗'}</span>
+              <div className={styles.rpItemBody}>
+                <span className={styles.rpItemText}>{it.t}</span>
+                {activeIdx === i && (
+                  <span className={styles.rpItemDetail}>{it.detail}</span>
+                )}
+              </div>
+              <span className={styles.rpItemChevron}>{activeIdx === i ? '▲' : '▼'}</span>
+            </div>
+          ))}
+        </div>
+        <div className={styles.rpLesson}>
+          <span className={styles.rpLessonTag}>LESSON</span>
+          Check Redis latency first — it spikes before errors appear.
+        </div>
+      </div>
+    </PanelChrome>
+  );
+}
+
 function PlatformShowcase() {
   return (
     <div className={styles.showcase}>
       <div className={styles.showcaseGlow} />
-
-      {/* ── Panel A: Metrics ── */}
       <div className={`${styles.showcaseSlot} ${styles.slotA}`}>
-        <PanelChrome
-          title="Metrics — production"
-          badge="P1 · Critical"
-          badgeStyle={{ color: 'var(--red-soft)', background: 'var(--red-dim)', borderColor: 'var(--red-border)' }}
-        >
-          <div className={styles.metricsGrid}>
-            {METRIC_PANELS.map(m => (
-              <div key={m.label} className={`${styles.metricTile} ${styles[`mt_${m.status}`]}`}>
-                <div className={styles.metricTileBar} style={{ width: `${m.w}%` }} />
-                <span className={styles.metricTileLabel}>{m.label}</span>
-                <span className={styles.metricTileValue}>{m.value}</span>
-                <span className={styles.metricTileSub}>{m.sub}</span>
-              </div>
-            ))}
-          </div>
-        </PanelChrome>
+        <ShowcaseMetrics />
       </div>
-
-      {/* ── Panel B: Logs ── */}
       <div className={`${styles.showcaseSlot} ${styles.slotB}`}>
-        <PanelChrome
-          title="Logs — all services"
-          badge="5 errors"
-          badgeStyle={{ color: 'var(--red-soft)', background: 'var(--red-dim)', borderColor: 'var(--red-border)' }}
-        >
-          <div className={styles.logTable}>
-            <div className={styles.logFilters}>
-              {['ALL','ERROR','WARN','INFO'].map((f, i) => (
-                <span key={f} className={`${styles.logFilter} ${i === 0 ? styles.logFilterActive : ''}`}>{f}</span>
-              ))}
-              <span className={styles.logCount}>5 lines</span>
-            </div>
-            {LOG_ROWS.map((r, i) => (
-              <div key={i} className={`${styles.logRow} ${r.cls === 'e' ? styles.logRowError : styles.logRowWarn}`}>
-                <span className={styles.logTime}>{r.t}</span>
-                <span className={styles.logLevel}>{r.l}</span>
-                <span className={styles.logSvc}>{r.svc}</span>
-                <span className={styles.logMsg}>{r.msg}</span>
-              </div>
-            ))}
-          </div>
-        </PanelChrome>
+        <ShowcaseLogs />
       </div>
-
-      {/* ── Panel C: Post-incident report ── */}
       <div className={`${styles.showcaseSlot} ${styles.slotC}`}>
-        <PanelChrome title="Post-incident Report" badge="INC-001" badgeStyle={{ color: 'var(--amber)', background: 'var(--amber-dim)', borderColor: 'var(--amber-border)' }}>
-          <div className={styles.reportPreview}>
-            <div className={styles.rpScoreRow}>
-              <div className={styles.rpScore}>
-                <span className={styles.rpScoreNum}>72</span>
-                <span className={styles.rpScoreMax}>/100</span>
-              </div>
-              <div className={styles.rpGrade}>Developing</div>
-            </div>
-            <div className={styles.rpBar}>
-              <div className={styles.rpBarFill} style={{ width: '72%' }} />
-            </div>
-            <div className={styles.rpItems}>
-              {[
-                { ok: true,  t: 'Identified Redis as root cause' },
-                { ok: true,  t: 'Checked kubectl top pods' },
-                { ok: false, t: 'Skipped Kubernetes Events' },
-                { ok: false, t: 'Restarted before diagnosing' },
-              ].map((it, i) => (
-                <div key={i} className={`${styles.rpItem} ${it.ok ? styles.rpItemOk : styles.rpItemFail}`}>
-                  <span>{it.ok ? '✓' : '✗'}</span>
-                  <span>{it.t}</span>
-                </div>
-              ))}
-            </div>
-            <div className={styles.rpLesson}>
-              <span className={styles.rpLessonTag}>LESSON</span>
-              Check Redis latency first — it spikes before errors appear.
-            </div>
-          </div>
-        </PanelChrome>
+        <ShowcaseReport />
       </div>
-
     </div>
   );
 }
@@ -352,7 +417,7 @@ export default function Landing() {
 
       {/* ── Nav ── */}
       <nav className={styles.nav}>
-        <NavLogo onClick={() => {}} />
+        <NavLogo onClick={() => navigate('/')} />
         <div className={styles.navRight}>
           <div className={styles.navStatus}>
             <span className={styles.navPulse} />
@@ -360,6 +425,9 @@ export default function Landing() {
               ? `${incidents.length} incident${incidents.length === 1 ? '' : 's'} active`
               : 'connecting…'}
           </div>
+          <button className={styles.navBrowseBtn} onClick={() => navigate('/incidents')}>
+            Browse incidents
+          </button>
           <span className={styles.navChip}>BETA</span>
         </div>
       </nav>
@@ -395,8 +463,13 @@ export default function Landing() {
             <span className={styles.heroMeta}>
               {active
                 ? `${active.severityLabel || active.severity} · ${active.service}`
-                : 'no signup · ~15 min · incident ready'}
+                : incidents.length === 0
+                  ? 'loading incidents…'
+                  : 'no signup · ~15 min · incident ready'}
             </span>
+            <button className={styles.heroBrowseLink} onClick={() => navigate('/incidents')}>
+              Browse all {incidents.length > 0 ? `${incidents.length} incidents` : 'incidents'} →
+            </button>
           </div>
         </div>
 
@@ -409,7 +482,55 @@ export default function Landing() {
 
       <Divider label="investigation preview" />
 
-      {/* ── Preview ── */}
+      {/* ── Incident strip — browse all scenarios ── */}
+      {incidents.length > 0 && (
+        <section className={styles.incidentStrip}>
+          <div className={styles.incidentStripHeader}>
+            <div>
+              <p className={styles.eyebrow}>Available incidents</p>
+              <h2 className={styles.incidentStripTitle}>Pick your scenario</h2>
+            </div>
+            <button className={styles.incidentStripAll} onClick={() => navigate('/incidents')}>
+              View all →
+            </button>
+          </div>
+          <div className={styles.incidentStripCards}>
+            {incidents.map(inc => {
+              const sev = (inc.severityLabel || inc.severity || '').toLowerCase();
+              const sevColor =
+                sev === 'critical' ? { color: 'var(--red-soft)',   bg: 'var(--red-dim)',    border: 'var(--red-border)',    bar: 'var(--red)'    } :
+                sev === 'high'     ? { color: 'var(--orange)',     bg: 'var(--orange-dim)', border: 'var(--orange-border)', bar: 'var(--orange)' } :
+                sev === 'medium'   ? { color: 'var(--yellow)',     bg: 'var(--yellow-dim)', border: 'var(--yellow-border)', bar: 'var(--yellow)' } :
+                                     { color: 'var(--green-soft)', bg: 'var(--green-dim)',  border: 'var(--green-border)',  bar: 'var(--green)'  };
+              const isActive = active?.rawId === inc.rawId;
+              return (
+                <button
+                  key={inc.rawId}
+                  className={`${styles.incidentCard} ${isActive ? styles.incidentCardActive : ''}`}
+                  onClick={() => {
+                    sessionStorage.setItem('selectedIncidentId', inc.rawId);
+                    navigate('/incident');
+                  }}
+                >
+                  <span className={styles.incidentCardBar} style={{ background: sevColor.bar }} />
+                  <div className={styles.incidentCardInner}>
+                    <div className={styles.incidentCardTop}>
+                      <span className={styles.incidentCardId}>{inc.id}</span>
+                      <span className={styles.incidentCardSev}
+                        style={{ color: sevColor.color, background: sevColor.bg, borderColor: sevColor.border }}>
+                        {inc.severityLabel || inc.severity}
+                      </span>
+                    </div>
+                    <p className={styles.incidentCardTitle}>{inc.title}</p>
+                    <span className={styles.incidentCardSvc}>{inc.service}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       <section className={styles.section}>
         <div className={styles.previewLayout}>
           <div className={styles.previewCopy}>
@@ -547,10 +668,15 @@ export default function Landing() {
           <span className={styles.ctaCmd}>&nbsp;respond --incident INC-001 --severity P1</span>
         </div>
         <p className={styles.ctaNote}>One incident. No hints. Just you and the signals.</p>
-        <button className={styles.btnPrimary} onClick={() => navigate('/incidents')}>
-          <span className={styles.btnDot} />
-          Start investigation
-        </button>
+        <div className={styles.ctaBtns}>
+          <button className={styles.btnPrimary} onClick={handleStart}>
+            <span className={styles.btnDot} />
+            Start investigation
+          </button>
+          <button className={styles.btnSecondary} onClick={() => navigate('/incidents')}>
+            Browse all incidents
+          </button>
+        </div>
       </section>
 
       {/* ── Footer ── */}

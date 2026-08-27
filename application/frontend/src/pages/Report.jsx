@@ -193,12 +193,20 @@ export default function Report() {
   const [revealed,        setRevealed]        = useState(false);
   const [incident,        setIncident]        = useState(null);
   const [rootCauseAnswer, setRootCauseAnswer] = useState(null);
+  const [noSession,       setNoSession]       = useState(false);
 
   useEffect(() => {
     try {
       const r = JSON.parse(sessionStorage.getItem('rca')       || 'null');
       const e = parseInt(sessionStorage.getItem('elapsed')     || '0', 10);
       const t = JSON.parse(sessionStorage.getItem('tabVisits') || '{}');
+
+      // Guard: if there's no rca AND no tabVisits, user landed here directly
+      if (!r && Object.keys(t).length === 0) {
+        setNoSession(true);
+        return;
+      }
+
       setRca(r);
       setElapsed(e);
       setTabVisits(t);
@@ -263,6 +271,28 @@ export default function Report() {
 
   return (
     <div className={styles.page}>
+
+      {/* ── No-session guard ── */}
+      {noSession && (
+        <div className={styles.noSessionWrap}>
+          <div className={styles.noSessionBox}>
+            <span className={styles.noSessionIcon}>◈</span>
+            <h2 className={styles.noSessionTitle}>No investigation found</h2>
+            <p className={styles.noSessionDesc}>
+              This report page is shown after you complete an investigation.
+              Start an incident to see your score and feedback here.
+            </p>
+            <div className={styles.noSessionActions}>
+              <button className={styles.btnPrimary} onClick={() => navigate('/')}>
+                Go to Home
+              </button>
+              <button className={styles.btnSecondary} onClick={() => navigate('/incidents')}>
+                Browse incidents
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Topbar ── */}
       <header className={styles.topbar}>
@@ -446,24 +476,37 @@ export default function Report() {
               <span className={styles.cardHeadIcon}>◆</span>
               The lesson
             </div>
-            <p className={styles.lessonText}>
-              When API latency spikes, always check <strong>dependencies first</strong>.
-              The issue is rarely in the service that's visibly failing — it's in what that
-              service depends on. In this case, Redis memory exhaustion was the root cause,
-              not a bug in checkout-api.
-            </p>
-            <p className={styles.lessonText}>
-              The investigation principle: <strong>follow the latency, not the errors</strong>.
-              Redis latency spiked from 2ms to 340ms several seconds before errors appeared.
-              That was the earliest signal.
-            </p>
+            {rootCauseAnswer?.lesson ? (
+              <p className={styles.lessonText}>{rootCauseAnswer.lesson}</p>
+            ) : (
+              <>
+                <p className={styles.lessonText}>
+                  When API latency spikes, always check <strong>dependencies first</strong>.
+                  The issue is rarely in the service that's visibly failing — it's in what that
+                  service depends on. In this case, Redis memory exhaustion was the root cause,
+                  not a bug in checkout-api.
+                </p>
+                <p className={styles.lessonText}>
+                  The investigation principle: <strong>follow the latency, not the errors</strong>.
+                  Redis latency spiked from 2ms to 340ms several seconds before errors appeared.
+                  That was the earliest signal.
+                </p>
+              </>
+            )}
           </div>
 
         </div>
 
         {/* ── Actions ── */}
         <div className={styles.actions}>
-          <button className={styles.btnSecondary} onClick={() => navigate('/investigate')}>
+          <button className={styles.btnSecondary} onClick={() => {
+            // Clear prior session so Investigation starts fresh
+            sessionStorage.removeItem('rca');
+            sessionStorage.removeItem('elapsed');
+            sessionStorage.removeItem('tabVisits');
+            sessionStorage.setItem('incidentStart', Date.now().toString());
+            navigate('/investigate');
+          }}>
             Re-investigate
           </button>
           <button className={styles.btnPrimary} onClick={() => navigate('/')}>

@@ -535,3 +535,53 @@
   .btnPrimary,
   .btnSecondary { flex: 1; text-align: center; justify-content: center; }
 }
+
+/* ── No-session guard ── */
+.noSessionWrap {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--bg-void);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.noSessionBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: 420px;
+  text-align: center;
+}
+
+.noSessionIcon {
+  font-size: 40px;
+  opacity: 0.25;
+  display: block;
+}
+
+.noSessionTitle {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.noSessionDesc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin: 0;
+}
+
+.noSessionActions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 8px;
+}

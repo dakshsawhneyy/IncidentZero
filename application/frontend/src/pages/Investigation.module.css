@@ -218,14 +218,13 @@
 
 .sidebarLabel { flex: 1; letter-spacing: 0.2px; }
 
-.visitBadge {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 9px;
-  color: var(--text-muted);
-  background: var(--bg-overlay);
-  border: 1px solid var(--border-subtle);
-  padding: 1px 5px;
-  border-radius: var(--radius-xs);
+.visitedDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  flex-shrink: 0;
+  box-shadow: 0 0 4px var(--green);
 }
 
 .draftDot {
@@ -350,6 +349,22 @@
   min-height: 0;
   gap: 14px;
 }
+
+/* ── Empty state — shared across panels ── */
+.emptyPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 48px 24px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+  grid-column: 1 / -1;
+}
+.emptyPanelIcon { font-size: 28px; opacity: 0.3; }
 
 /* ── Metrics ── */
 .metricsGrid {

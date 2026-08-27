@@ -43,44 +43,32 @@ function Logo({ onClick }) {
 const BLAST_METRICS = [
   {
     label: 'Failed transactions',
-    start: 2400,
+    start: 2400, max: 15000,
     perTick: () => Math.floor(Math.random() * 18) + 8,
-    color: 'var(--red-soft)',
-    bg: 'var(--red-dim)',
-    border: 'var(--red-border)',
-    prefix: '',
-    suffix: '',
+    color: 'var(--red-soft)', bg: 'var(--red-dim)', border: 'var(--red-border)',
+    prefix: '', suffix: '',
   },
   {
     label: 'Users affected',
-    start: 1180,
+    start: 1180, max: 8000,
     perTick: () => Math.floor(Math.random() * 12) + 4,
-    color: 'var(--orange)',
-    bg: 'var(--orange-dim)',
-    border: 'var(--orange-border)',
-    prefix: '~',
-    suffix: '',
+    color: 'var(--orange)', bg: 'var(--orange-dim)', border: 'var(--orange-border)',
+    prefix: '~', suffix: '',
   },
   {
     label: 'Error rate',
-    start: 183,   // stored as tenths: 18.3%
+    start: 183, max: 999,   // tenths: 99.9%
     perTick: () => Math.floor(Math.random() * 3) + 1,
-    color: 'var(--yellow)',
-    bg: 'var(--yellow-dim)',
-    border: 'var(--yellow-border)',
-    prefix: '',
-    suffix: '%',
+    color: 'var(--yellow)', bg: 'var(--yellow-dim)', border: 'var(--yellow-border)',
+    prefix: '', suffix: '%',
     format: v => (v / 10).toFixed(1),
   },
   {
     label: 'P99 latency',
-    start: 1247,
+    start: 1247, max: 9999,
     perTick: () => Math.floor(Math.random() * 40) + 10,
-    color: 'var(--red-soft)',
-    bg: 'var(--red-dim)',
-    border: 'var(--red-border)',
-    prefix: '',
-    suffix: 'ms',
+    color: 'var(--red-soft)', bg: 'var(--red-dim)', border: 'var(--red-border)',
+    prefix: '', suffix: 'ms',
   },
 ];
 
@@ -90,7 +78,11 @@ function BlastRadius() {
 
   useEffect(() => {
     const id = setInterval(() => {
-      setValues(prev => prev.map((v, i) => v + BLAST_METRICS[i].perTick()));
+      setValues(prev => prev.map((v, i) => {
+        const m = BLAST_METRICS[i];
+        const next = v + m.perTick();
+        return next >= m.max ? m.max : next;   // clamp at ceiling
+      }));
       // flash a random metric each tick for urgency
       const pick = Math.floor(Math.random() * BLAST_METRICS.length);
       setFlash(prev => prev.map((_, i) => i === pick));
@@ -186,7 +178,10 @@ export default function IncidentBrief() {
     };
   }, []);
 
-  const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const timeStr = now.toLocaleTimeString('en-US', {
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    timeZone: 'UTC', hour12: false,
+  });
 
   const meta = incident
     ? { ...incident, severityLabel: incident.severityLabel || (incident.severity ? incident.severity.charAt(0).toUpperCase() + incident.severity.slice(1) : 'Critical') }

@@ -13,7 +13,15 @@ function MetricsPanel({ metrics }) {
     if (!Array.isArray(data) || data.length === 0) {
       return <div className={styles.sparkPlaceholder}>No data</div>;
     }
-
+    // Guard: single data point causes division by zero — render a flat line
+    if (data.length === 1) {
+      const w = 120, h = 36;
+      return (
+        <svg width={w} height={h} className={styles.spark}>
+          <line x1="2" y1={h/2} x2={w-2} y2={h/2} stroke={statusColor[status]} strokeWidth="1.5" opacity="0.8" />
+        </svg>
+      );
+    }
     const max = Math.max(...data);
     const min = Math.min(...data);
     const range = max - min || 1;
@@ -32,7 +40,12 @@ function MetricsPanel({ metrics }) {
 
   return (
     <div className={styles.metricsGrid}>
-      {metrics.map(m => (
+      {metrics.length === 0 ? (
+        <div className={styles.emptyPanel}>
+          <span className={styles.emptyPanelIcon}>📊</span>
+          <span>No metrics data yet</span>
+        </div>
+      ) : metrics.map(m => (
         <div key={m.label} className={`${styles.metricCard} ${styles[m.status]}`}>
           <div className={styles.metricHeader}>
             <span className={styles.metricLabel}>{m.label}</span>
@@ -79,7 +92,12 @@ function LogsPanel({ logs }) {
         <span className={styles.logCount}>{filtered.length} lines</span>
       </div>
       <div className={styles.logList}>
-        {filtered.map((l, i) => (
+        {logs.length === 0 ? (
+          <div className={styles.emptyPanel}>
+            <span className={styles.emptyPanelIcon}>📄</span>
+            <span>No log entries available</span>
+          </div>
+        ) : filtered.map((l, i) => (
           <div key={i} className={`${styles.logRow} ${levelStyle[l.level] || ''}`}>
             <span className={styles.logTime}>{l.time}</span>
             <span className={`${styles.logLevel} ${levelStyle[l.level] || ''}`}>{l.level}</span>
@@ -102,7 +120,12 @@ function EventsPanel({ events }) {
         <span className={styles.eventsTotal}>{events.length} events</span>
       </div>
       <div className={styles.eventList}>
-        {events.map((e, i) => (
+        {events.length === 0 ? (
+          <div className={styles.emptyPanel}>
+            <span className={styles.emptyPanelIcon}>⚡</span>
+            <span>No cluster events found</span>
+          </div>
+        ) : events.map((e, i) => (
           <div key={i} className={`${styles.eventRow} ${typeColor[e.type] || ''}`}>
             <div className={styles.eventMeta}>
               <span className={`${styles.eventType} ${typeColor[e.type]}`}>{e.type}</span>
@@ -360,6 +383,11 @@ export default function Investigation() {
   }
 
   useEffect(() => {
+    // If arriving fresh (no submitted RCA), stamp a new start time
+    const hasRca = !!sessionStorage.getItem('rca');
+    if (!hasRca) {
+      sessionStorage.setItem('incidentStart', Date.now().toString());
+    }
     const start = parseInt(sessionStorage.getItem('incidentStart') || Date.now().toString(), 10);
     const tick = setInterval(() => {
       setElapsed(Math.floor((Date.now() - start) / 1000));
@@ -445,7 +473,8 @@ export default function Investigation() {
 
   function handleTabClick(id) {
     setActiveTab(id);
-    setTabVisits(prev => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
+    // Only count the first visit — subsequent clicks on the same tab don't add value
+    setTabVisits(prev => prev[id] ? prev : { ...prev, [id]: 1 });
   }
 
   function formatTime(secs) {
@@ -533,7 +562,7 @@ export default function Investigation() {
                   <span className={styles.draftDot} title="Draft saved" />
                 )}
                 {tab.id !== 'rca' && tabVisits[tab.id] && (
-                  <span className={styles.visitBadge}>{tabVisits[tab.id]}</span>
+                  <span className={styles.visitedDot} title="Visited" />
                 )}
               </button>
             ))}
@@ -550,7 +579,12 @@ export default function Investigation() {
                 <span className={styles.summaryViewBtn}>View ↗</span>
               </div>
               <div className={styles.summaryService}>{incidentMeta?.service || '—'}</div>
-              <div className={styles.summaryDesc}>Latency: 80ms → 1.2s</div>
+              <div className={styles.summaryDesc}>{incidentMeta?.description
+                ? incidentMeta.description.length > 80
+                  ? incidentMeta.description.slice(0, 80) + '…'
+                  : incidentMeta.description
+                : '—'}
+              </div>
               <div className={styles.summaryTime}>Started {incidentMeta?.startTime || '—'}</div>
             </button>
           </div>
